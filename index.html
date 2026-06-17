@@ -1,0 +1,2480 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>КРАШ - Приват Ассорти</title>
+    
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/109/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/2.1.3/TweenMax.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 16px;
+            gap: 16px;
+        }
+
+        /* Header - VIP Minimal */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 32px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        .logo-subtitle {
+            font-size: 10px;
+            color: rgba(255,255,255,0.35);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        /* Profile Section - Center */
+        .profile-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .profile-section:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .profile-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid rgba(255,255,255,0.15);
+            position: relative;
+            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-avatar-placeholder {
+            font-size: 20px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.3);
+        }
+
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .profile-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .profile-level {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+        }
+
+        .level-badge {
+            background: linear-gradient(135deg, #c9a227 0%, #a8860f 100%);
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 11px;
+        }
+
+        .level-name {
+            color: rgba(255,255,255,0.6);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .balance-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #111 100%);
+            padding: 12px 24px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .balance-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .balance-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .balance-label {
+            font-size: 10px;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .balance-amount {
+            font-size: 24px;
+            font-weight: 600;
+            color: #fff;
+            letter-spacing: -0.5px;
+        }
+
+        .balance-amount span {
+            color: rgba(255,255,255,0.4);
+            font-size: 14px;
+        }
+
+        /* Profile Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: linear-gradient(180deg, #1a1a1a 0%, #111 100%);
+            border-radius: 20px;
+            padding: 32px;
+            width: 400px;
+            max-width: 90vw;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .modal-section {
+            margin-bottom: 20px;
+        }
+
+        .modal-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .modal-input {
+            width: 100%;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 14px 16px;
+            font-size: 16px;
+            color: #fff;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .modal-input:focus {
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        /* Avatar upload */
+        .avatar-upload-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .avatar-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid rgba(255,255,255,0.15);
+            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .avatar-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .avatar-preview-placeholder {
+            font-size: 36px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.2);
+        }
+
+        .upload-btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .upload-btn:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .upload-btn input[type="file"] {
+            display: none;
+        }
+
+        .modal-stats {
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .modal-stats-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .modal-stats-row:last-child {
+            border-bottom: none;
+        }
+
+        .modal-stats-label {
+            color: rgba(255,255,255,0.5);
+            font-size: 14px;
+        }
+
+        .modal-stats-value {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .modal-btn-save {
+            background: #c9a227;
+            color: #000;
+        }
+
+        .modal-btn-save:hover {
+            background: #d4b23a;
+        }
+
+        .modal-btn-cancel {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+
+        .modal-btn-cancel:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        /* Main Area */
+        .main-area {
+            display: flex;
+            gap: 20px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* Canvas Container */
+        .canvas-container {
+            flex: 1;
+            background: linear-gradient(180deg, #111 0%, #0a0a0a 100%);
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: column;
+        }
+
+        #container {
+            flex: 1;
+            min-height: 400px;
+        }
+
+        /* Game Status */
+        .game-status-bar {
+            position: absolute;
+            top: 20px;
+            left: 24px;
+            right: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .status-badge {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.6);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .status-ready {
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        .status-running {
+            background: rgba(80,80,80,0.2);
+            color: #999;
+            border-color: rgba(150,150,150,0.2);
+        }
+
+        .status-crashed {
+            background: rgba(255,80,80,0.15);
+            color: #ff5050;
+            border-color: rgba(255,80,80,0.3);
+        }
+
+        .round-info {
+            display: flex;
+            gap: 16px;
+        }
+
+        .round-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+        }
+
+        .round-label {
+            font-size: 10px;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .round-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.8);
+        }
+
+        /* Multiplier */
+        .multiplier-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .multiplier-container {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .multiplier-value {
+            font-size: 88px;
+            font-weight: 200;
+            line-height: 1;
+            letter-spacing: -4px;
+            transition: all 0.15s ease;
+        }
+
+        .multiplier-value.idle {
+            color: rgba(255,255,255,0.15);
+            font-size: 56px;
+        }
+
+        .multiplier-value.normal {
+            color: rgba(255,255,255,0.9);
+        }
+
+        .multiplier-value.good {
+            color: #fff;
+            text-shadow: 0 0 60px rgba(255,255,255,0.5);
+        }
+
+        .multiplier-value.warning {
+            color: #fff;
+            text-shadow: 0 0 80px rgba(255,255,255,0.6);
+        }
+
+        .multiplier-value.danger {
+            color: #ff4040;
+            text-shadow: 0 0 100px rgba(255,60,60,0.8);
+            animation: danger-pulse 0.3s ease-in-out infinite;
+        }
+
+        @keyframes danger-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .multiplier-x {
+            font-size: 40px;
+            font-weight: 300;
+            color: rgba(255,255,255,0.25);
+        }
+
+        .multiplier-hint {
+            margin-top: 24px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.25);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        /* Crash Result */
+        .crash-result {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 20;
+            animation: crash-appear 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes crash-appear {
+            0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        .crash-text {
+            font-size: 72px;
+            font-weight: 200;
+            color: #ff4040;
+            letter-spacing: 16px;
+            text-transform: uppercase;
+        }
+
+        .crash-multiplier {
+            margin-top: 8px;
+            font-size: 32px;
+            font-weight: 300;
+            color: rgba(255,255,255,0.4);
+        }
+
+        /* Control Panel */
+        .control-panel {
+            width: 380px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .panel-card {
+            background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .panel-title {
+            font-size: 10px;
+            color: rgba(255,255,255,0.35);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+
+        /* Bet Amount */
+        .bet-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .bet-input-wrapper {
+            position: relative;
+        }
+
+        .bet-input {
+            width: 100%;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 16px 70px 16px 16px;
+            font-size: 22px;
+            font-weight: 500;
+            color: #fff;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .bet-input:focus {
+            border-color: rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.6);
+        }
+
+        .bet-input::placeholder {
+            color: rgba(255,255,255,0.2);
+            font-weight: 400;
+        }
+
+        .bet-currency {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+            color: rgba(255,255,255,0.3);
+            font-weight: 500;
+        }
+
+        .quick-bet-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .quick-btn {
+            padding: 12px 8px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 10px;
+            color: rgba(255,255,255,0.7);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .quick-btn:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.12);
+            color: #fff;
+        }
+
+        /* Auto Cashout */
+        .auto-cashout-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .auto-input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        .auto-input {
+            width: 100%;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 14px 45px 14px 14px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #fff;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .auto-input:focus {
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .auto-input::placeholder {
+            color: rgba(255,255,255,0.2);
+        }
+
+        .auto-x {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+            color: rgba(255,255,255,0.3);
+        }
+
+        .auto-toggle {
+            width: 52px;
+            height: 30px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 15px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            flex-shrink: 0;
+        }
+
+        .auto-toggle.active {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .auto-toggle::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: #666;
+            border-radius: 50%;
+            top: 4px;
+            left: 4px;
+            transition: all 0.25s ease;
+        }
+
+        .auto-toggle.active::after {
+            left: 26px;
+            background: #fff;
+        }
+
+        /* Main Button */
+        .main-button {
+            width: 100%;
+            padding: 20px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .btn-place-bet {
+            background: #fff;
+            color: #000;
+        }
+
+        .btn-place-bet:hover {
+            background: rgba(255,255,255,0.9);
+        }
+
+        .btn-cashout {
+            background: linear-gradient(135deg, #404040 0%, #2a2a2a 100%);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+            animation: cashout-pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes cashout-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.1); }
+            50% { box-shadow: 0 0 0 8px rgba(255,255,255,0); }
+        }
+
+        .btn-waiting {
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.3);
+            cursor: not-allowed;
+        }
+
+        /* Current Bet */
+        .current-bet-card {
+            display: none;
+            background: rgba(255,255,255,0.03);
+            border-color: rgba(255,255,255,0.1);
+        }
+
+        .current-bet-card.active {
+            display: block;
+        }
+
+        .bet-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .bet-info-item {
+            text-align: center;
+            padding: 16px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+        }
+
+        .bet-info-label {
+            font-size: 10px;
+            color: rgba(255,255,255,0.35);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 8px;
+        }
+
+        .bet-info-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        /* History */
+        .history-list {
+            max-height: 180px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+           .align-items: center;
+            padding: 10px 14px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 8px;
+            transition: all 0.15s ease;
+        }
+
+        .history-item:hover {
+            background: rgba(255,255,255,0.04);
+        }
+
+        .history-time {
+            font-size: 11px;
+            color: rgba(255,255,255,0.3);
+        }
+
+        .history-result {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .history-multiplier {
+            font-size: 13px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .history-multiplier.win {
+            color: #fff;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .history-multiplier.loss {
+            color: #ff5050;
+            background: rgba(255,80,80,0.1);
+        }
+
+        .history-profit {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .history-profit.positive {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .history-profit.negative {
+            color: #ff5050;
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .stat-card {
+            padding: 14px 8px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .stat-label {
+            font-size: 9px;
+            color: rgba(255,255,255,0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .main-area {
+                flex-direction: column;
+            }
+            .control-panel {
+                width: 100%;
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            .control-panel .panel-card {
+                flex: 1;
+                min-width: 280px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .game-container {
+                padding: 10px;
+            }
+            .logo {
+                font-size: 18px;
+            }
+            .multiplier-value {
+                font-size: 48px;
+            }
+            .header {
+                padding: 12px 16px;
+            }
+            .balance-amount {
+                font-size: 18px;
+            }
+            .profile-section {
+                display: none;
+            }
+        }
+
+        /* Win Overlay */
+        .win-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 20;
+            animation: win-appear 0.4s ease-out;
+        }
+
+        @keyframes win-appear {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        .win-amount {
+            font-size: 56px;
+            font-weight: 200;
+            color: #fff;
+            letter-spacing: -2px;
+        }
+
+        .win-label {
+            font-size: 12px;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <header class="header">
+            <div class="logo-section">
+                <div class="logo-icon">
+                    <a href="https://postimg.cc/fLDH5GnD" target="_blank"><img src="https://i.postimg.cc/fLDH5GnD/sax.jpg" alt="logo"></a>
+                </div>
+                <div class="logo-text">
+                    <div class="logo">КРАШ</div>
+                    <div class="logo-subtitle">Приват Ассорти</div>
+                </div>
+            </div>
+
+            <!-- Profile Section - Center -->
+            <div class="profile-section" onclick="openProfileModal()">
+                <div class="profile-avatar" id="header-avatar">
+                    <span class="profile-avatar-placeholder">?</span>
+                </div>
+                <div class="profile-info">
+                    <div class="profile-name" id="profile-name">Player</div>
+                    <div class="profile-level">
+                        <span class="level-badge" id="level-badge">LVL 1</span>
+                        <span class="level-name" id="level-name">Новичок</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <div class="balance-card">
+                    <div class="balance-icon">$</div>
+                    <div class="balance-info">
+                        <span class="balance-label">Баланс</span>
+                        <span class="balance-amount" id="balance">500 <span>RUB</span></span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-area">
+            <div class="canvas-container">
+                <div id="container"></div>
+
+                <div class="game-status-bar">
+                    <div class="status-badge" id="status-badge">Ожидание</div>
+                    <div class="round-info">
+                        <div class="round-item">
+                            <span class="round-label">Раунд</span>
+                            <span class="round-value" id="round-number">0</span>
+                        </div>
+                        <div class="round-item">
+                            <span class="round-label">RTP</span>
+                            <span class="round-value">94%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="multiplier-overlay" id="multiplier-overlay">
+                    <div class="multiplier-container">
+                        <span class="multiplier-value idle" id="multiplier">1.00</span>
+                        <span class="multiplier-x">x</span>
+                    </div>
+                    <div class="multiplier-hint" id="multiplier-hint">Сделайте ставку</div>
+                </div>
+            </div>
+
+            <div class="control-panel">
+                <div class="panel-card">
+                    <div class="panel-title">Сумма ставки</div>
+                    <div class="bet-controls">
+                        <div class="bet-input-wrapper">
+                            <input type="number" class="bet-input" id="bet-amount" placeholder="0.00" min="1" step="0.01" value="100">
+                            <span class="bet-currency">RUB</span>
+                        </div>
+                        <div class="quick-bet-grid">
+                            <button class="quick-btn" onclick="multiplyBet(0.5)">½</button>
+                            <button class="quick-btn" onclick="multiplyBet(2)">x2</button>
+                            <button class="quick-btn" onclick="setBet(100)">100</button>
+                            <button class="quick-btn" onclick="setBet(500)">500</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-card">
+                    <div class="panel-title">Авто-вывод</div>
+                    <div class="auto-cashout-row">
+                        <div class="auto-input-wrapper">
+                            <input type="number" class="auto-input" id="auto-cashout" placeholder="Множитель" min="1.01" step="0.01" value="2.00">
+                            <span class="auto-x">x</span>
+                        </div>
+                        <div class="auto-toggle" id="auto-toggle" onclick="toggleAutoCashout()"></div>
+                    </div>
+                </div>
+
+                <div class="panel-card current-bet-card" id="current-bet-card">
+                    <div class="panel-title">Текущий раунд</div>
+                    <div class="bet-info-grid">
+                        <div class="bet-info-item">
+                            <div class="bet-info-label">Ставка</div>
+                            <div class="bet-info-value" id="current-bet-display">0.00</div>
+                        </div>
+                        <div class="bet-info-item">
+                            <div class="bet-info-label">Выигрыш</div>
+                            <div class="bet-info-value" id="potential-win">0.00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="main-button btn-place-bet" id="main-button" onclick="handleMainButton()">
+                    Сделать ставку
+                </button>
+
+                <div class="panel-card">
+                    <div class="panel-title">Статистика</div>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-games">0</div>
+                            <div class="stat-label">Игр</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-wins">0</div>
+                            <div class="stat-label">Побед</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-total-bet">0</div>
+                            <div class="stat-label">Ставок</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-total-win">0</div>
+                            <div class="stat-label">Выиграно</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-card">
+                    <div class="panel-title">История</div>
+                    <div class="history-list" id="history-list">
+                        <div style="text-align: center; padding: 20px; color: rgba(255,255,255,0.2); font-size: 12px;">
+                            История пуста
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div class="modal-overlay" id="profile-modal">
+        <div class="modal">
+            <div class="modal-title">Профиль игрока</div>
+
+            <div class="modal-section">
+                <label class="modal-label">Аватар</label>
+                <div class="avatar-upload-area">
+                    <div class="avatar-preview" id="modal-avatar-preview">
+                        <span class="avatar-preview-placeholder">?</span>
+                    </div>
+                    <label class="upload-btn">
+                        Загрузить фото
+                        <input type="file" id="avatar-file-input" accept="image/*" onchange="handleAvatarUpload(event)">
+                    </label>
+                </div>
+            </div>
+
+            <div class="modal-section">
+                <label class="modal-label">Ваш никнейм</label>
+                <input type="text" class="modal-input" id="nickname-input" placeholder="Введите никнейм" maxlength="20">
+            </div>
+
+            <div class="modal-stats">
+                <div class="modal-stats-row">
+                    <span class="modal-stats-label">Текущий баланс</span>
+                    <span class="modal-stats-value" id="modal-balance">500 RUB</span>
+                </div>
+                <div class="modal-stats-row">
+                    <span class="modal-stats-label">Пик баланса</span>
+                    <span class="modal-stats-value" id="modal-peak-balance">500 RUB</span>
+                </div>
+                <div class="modal-stats-row">
+                    <span class="modal-stats-label">Уровень</span>
+                    <span class="modal-stats-value" id="modal-level">1 - Новичок</span>
+                </div>
+                <div class="modal-stats-row">
+                    <span class="modal-stats-label">До следующего уровня</span>
+                    <span class="modal-stats-value" id="modal-next-level">4,500 RUB</span>
+                </div>
+            </div>
+
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" onclick="closeProfileModal()">Отмена</button>
+                <button class="modal-btn modal-btn-save" onclick="saveProfile()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Level system
+        const LEVELS = [
+            { threshold: 500, name: 'Новичок' },
+            { threshold: 5000, name: 'Игрок' },
+            { threshold: 10000, name: 'Опытный' },
+            { threshold: 50000, name: 'Профи' },
+            { threshold: 100000, name: 'Мастер' },
+            { threshold: 500000, name: 'Легенда' },
+            { threshold: 1000000, name: 'Миллионер' },
+            { threshold: 10000000, name: 'Топ Игрок' }
+        ];
+
+        // Game State
+        const state = {
+            balance: 500,
+            peakBalance: 500,
+            currentBet: 0,
+            multiplier: 1.00,
+            crashPoint: 1.00,
+            isRunning: false,
+            hasBet: false,
+            autoCashoutEnabled: false,
+            autoCashoutValue: 2.00,
+            roundNumber: 0,
+            stats: {
+                games: 0,
+                wins: 0,
+                totalBet: 0,
+                totalWin: 0
+            },
+            history: [],
+            profile: {
+                nickname: 'Player',
+                avatar: null
+            }
+        };
+
+        
+// Telegram Mini App Auto Profile
+function loadTelegramProfile() {
+    if (!window.Telegram || !window.Telegram.WebApp) return;
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        const user = tg.initDataUnsafe.user;
+
+        state.profile.nickname =
+            user.username ||
+            [user.first_name, user.last_name].filter(Boolean).join(' ') ||
+            'Player';
+
+        if (user.photo_url) {
+            state.profile.avatar = user.photo_url;
+        }
+
+        updateProfileDisplay();
+        saveGameData();
+    }
+}
+
+// Load saved data
+        function loadGameData() {
+            const saved = localStorage.getItem('crashGameData');
+            if (saved) {
+                const data = JSON.parse(saved);
+                state.balance = data.balance || 500;
+                state.peakBalance = data.peakBalance || data.balance || 500;
+                state.stats = data.stats || state.stats;
+                state.profile = data.profile || state.profile;
+            }
+            updateProfileDisplay();
+        }
+
+        // Save game data
+        function saveGameData() {
+            localStorage.setItem('crashGameData', JSON.stringify({
+                balance: state.balance,
+                peakBalance: state.peakBalance,
+                stats: state.stats,
+                profile: state.profile
+            }));
+        }
+
+        // Get level from peak balance
+        function getLevel(peakBalance) {
+            let level = 1;
+            for (let i = LEVELS.length - 1; i >= 0; i--) {
+                if (peakBalance >= LEVELS[i].threshold) {
+                    level = i + 1;
+                    break;
+                }
+            }
+            return level;
+        }
+
+        // Get next level threshold
+        function getNextLevelThreshold(currentLevel) {
+            if (currentLevel >= LEVELS.length) return null;
+            return LEVELS[currentLevel].threshold;
+        }
+
+        // Update profile display
+        function updateProfileDisplay() {
+            const level = getLevel(state.peakBalance);
+            const levelData = LEVELS[level - 1];
+
+            document.getElementById('profile-name').textContent = state.profile.nickname;
+
+            // Update header avatar
+            const headerAvatar = document.getElementById('header-avatar');
+            if (state.profile.avatar) {
+                headerAvatar.innerHTML = `<img src="${state.profile.avatar}" alt="avatar">`;
+            } else {
+                const initial = state.profile.nickname ? state.profile.nickname.charAt(0).toUpperCase() : '?';
+                headerAvatar.innerHTML = `<span class="profile-avatar-placeholder">${initial}</span>`;
+            }
+
+            document.getElementById('level-badge').textContent = 'LVL ' + level;
+            document.getElementById('level-name').textContent = levelData.name;
+        }
+
+        // Handle avatar upload
+        let tempAvatar = null;
+
+        function handleAvatarUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    tempAvatar = e.target.result;
+                    const preview = document.getElementById('modal-avatar-preview');
+                    preview.innerHTML = `<img src="${tempAvatar}" alt="avatar">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Profile Modal
+        function openProfileModal() {
+            const modal = document.getElementById('profile-modal');
+            modal.classList.add('active');
+
+            // Reset temp avatar
+            tempAvatar = state.profile.avatar;
+
+            // Update modal avatar preview
+            const preview = document.getElementById('modal-avatar-preview');
+            if (state.profile.avatar) {
+                preview.innerHTML = `<img src="${state.profile.avatar}" alt="avatar">`;
+            } else {
+                const initial = state.profile.nickname ? state.profile.nickname.charAt(0).toUpperCase() : '?';
+                preview.innerHTML = `<span class="avatar-preview-placeholder">${initial}</span>`;
+            }
+
+            document.getElementById('nickname-input').value = state.profile.nickname;
+
+            // Update stats
+            const level = getLevel(state.peakBalance);
+            const nextThreshold = getNextLevelThreshold(level);
+
+            document.getElementById('modal-balance').textContent = formatMoney(state.balance) + ' RUB';
+            document.getElementById('modal-peak-balance').textContent = formatMoney(state.peakBalance) + ' RUB';
+            document.getElementById('modal-level').textContent = level + ' - ' + LEVELS[level - 1].name;
+
+            if (nextThreshold) {
+                const remaining = nextThreshold - state.peakBalance;
+                document.getElementById('modal-next-level').textContent = formatMoney(remaining) + ' RUB';
+            } else {
+                document.getElementById('modal-next-level').textContent = 'Максимальный уровень!';
+            }
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profile-modal').classList.remove('active');
+            tempAvatar = null;
+        }
+
+        function saveProfile() {
+            const nickname = document.getElementById('nickname-input').value.trim();
+            if (nickname) {
+                state.profile.nickname = nickname.substring(0, 20);
+            }
+
+            if (tempAvatar) {
+                state.profile.avatar = tempAvatar;
+            }
+
+            updateProfileDisplay();
+            saveGameData();
+            closeProfileModal();
+        }
+
+        // DOM Elements
+        const elements = {
+            balance: document.getElementById('balance'),
+            multiplier: document.getElementById('multiplier'),
+            multiplierHint: document.getElementById('multiplier-hint'),
+            multiplierOverlay: document.getElementById('multiplier-overlay'),
+            statusBadge: document.getElementById('status-badge'),
+            roundNumber: document.getElementById('round-number'),
+            betAmount: document.getElementById('bet-amount'),
+            autoCashout: document.getElementById('auto-cashout'),
+            autoToggle: document.getElementById('auto-toggle'),
+            mainButton: document.getElementById('main-button'),
+            currentBetCard: document.getElementById('current-bet-card'),
+            currentBetDisplay: document.getElementById('current-bet-display'),
+            potentialWin: document.getElementById('potential-win'),
+            historyList: document.getElementById('history-list')
+        };
+
+        function formatMoney(num) {
+            return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",").replace(/\.00$/, '');
+        }
+
+        function updateDisplay() {
+            elements.balance.innerHTML = formatMoney(state.balance) + ' <span>RUB</span>';
+            elements.roundNumber.textContent = state.roundNumber;
+
+            document.getElementById('stat-games').textContent = state.stats.games;
+            document.getElementById('stat-wins').textContent = state.stats.wins;
+            document.getElementById('stat-total-bet').textContent = formatMoney(state.stats.totalBet);
+            document.getElementById('stat-total-win').textContent = formatMoney(state.stats.totalWin);
+        }
+
+        // Update peak balance and check level up
+        function updatePeakBalance() {
+            if (state.balance > state.peakBalance) {
+                state.peakBalance = state.balance;
+                updateProfileDisplay();
+                saveGameData();
+            }
+        }
+
+        function generateCrashPoint() {
+            const r = Math.random();
+            if (r < 0.01) return 1.00;
+            const crash = 0.94 / (1 - r);
+            return Math.max(1.00, Math.floor(crash * 100) / 100);
+        }
+
+        function setBet(amount) {
+            elements.betAmount.value = amount;
+        }
+
+        function multiplyBet(mult) {
+            const current = parseFloat(elements.betAmount.value) || 0;
+            elements.betAmount.value = Math.max(1, Math.floor(current * mult));
+        }
+
+        function toggleAutoCashout() {
+            state.autoCashoutEnabled = !state.autoCashoutEnabled;
+            elements.autoToggle.classList.toggle('active', state.autoCashoutEnabled);
+
+            if (state.autoCashoutEnabled) {
+                const val = parseFloat(elements.autoCashout.value);
+                if (val > 1) state.autoCashoutValue = val;
+            }
+        }
+
+        elements.autoCashout.addEventListener('change', () => {
+            const val = parseFloat(elements.autoCashout.value);
+            if (val > 1) state.autoCashoutValue = val;
+        });
+
+        function handleMainButton() {
+            if (state.isRunning && state.hasBet) {
+                cashout();
+            } else if (!state.isRunning && !state.hasBet) {
+                placeBet();
+            }
+        }
+
+        function placeBet() {
+            const betAmount = parseFloat(elements.betAmount.value);
+
+            if (!betAmount || betAmount <= 0) {
+                showError('Введите сумму ставки');
+                return;
+            }
+
+            if (betAmount > state.balance) {
+                showError('Недостаточно средств');
+                return;
+            }
+
+            state.balance -= betAmount;
+            state.currentBet = betAmount;
+            state.hasBet = true;
+            state.stats.totalBet += betAmount;
+            state.roundNumber++;
+
+            updateDisplay();
+            saveGameData();
+
+            elements.currentBetCard.classList.add('active');
+            elements.currentBetDisplay.textContent = formatMoney(state.currentBet);
+            elements.potentialWin.textContent = formatMoney(state.currentBet);
+
+            elements.mainButton.textContent = 'Ожидайте...';
+            elements.mainButton.className = 'main-button btn-waiting';
+            elements.mainButton.disabled = true;
+
+            elements.statusBadge.textContent = 'Готов';
+            elements.statusBadge.className = 'status-badge status-ready';
+            elements.multiplierHint.textContent = 'Раунд начинается...';
+
+            setTimeout(() => startGame(), 800);
+        }
+
+        function showError(msg) {
+            alert(msg);
+        }
+
+        let gameInterval = null;
+        let gameStartTime = null;
+
+        function startGame() {
+            state.crashPoint = generateCrashPoint();
+            state.multiplier = 1.00;
+            state.isRunning = true;
+            state.stats.games++;
+
+            // Robot entrance animation - EVERY round
+            if (window.robotEnter) window.robotEnter();
+
+            elements.statusBadge.textContent = 'В игре';
+            elements.statusBadge.className = 'status-badge status-running';
+            elements.multiplier.className = 'multiplier-value normal';
+            elements.multiplierHint.textContent = '';
+
+            elements.mainButton.textContent = 'Забрать ' + formatMoney(state.currentBet);
+            elements.mainButton.className = 'main-button btn-cashout';
+            elements.mainButton.disabled = false;
+
+            gameStartTime = Date.now();
+
+            gameInterval = setInterval(() => {
+                const elapsed = (Date.now() - gameStartTime) / 1000;
+                const growthRate = 0.08;
+                state.multiplier = Math.pow(Math.E, growthRate * elapsed);
+                state.multiplier = Math.floor(state.multiplier * 100) / 100;
+
+                elements.multiplier.textContent = state.multiplier.toFixed(2);
+
+                const potential = state.currentBet * state.multiplier;
+                elements.potentialWin.textContent = formatMoney(potential);
+                elements.mainButton.textContent = 'Забрать ' + formatMoney(potential);
+
+                if (state.multiplier < 1.5) {
+                    elements.multiplier.className = 'multiplier-value normal';
+                } else if (state.multiplier < 2) {
+                    elements.multiplier.className = 'multiplier-value good';
+                } else if (state.multiplier < 3) {
+                    elements.multiplier.className = 'multiplier-value warning';
+                } else {
+                    elements.multiplier.className = 'multiplier-value danger';
+                }
+
+                if (state.autoCashoutEnabled && state.multiplier >= state.autoCashoutValue) {
+                    cashout();
+                    return;
+                }
+
+                if (state.multiplier >= state.crashPoint) {
+                    crash();
+                }
+            }, 50);
+        }
+
+        function cashout() {
+            if (!state.isRunning || !state.hasBet) return;
+
+            clearInterval(gameInterval);
+            gameInterval = null;
+
+            const winAmount = state.currentBet * state.multiplier;
+            state.balance += winAmount;
+            state.stats.wins++;
+            state.stats.totalWin += winAmount;
+
+            // Update peak balance
+            updatePeakBalance();
+
+            // Robot exit animation on win - flies away stylishly
+            if (window.robotExit) window.robotExit();
+
+            addHistory(state.multiplier, true, state.currentBet, winAmount);
+
+            state.hasBet = false;
+            state.currentBet = 0;
+            state.isRunning = false;
+
+            updateDisplay();
+            saveGameData();
+
+            elements.currentBetCard.classList.remove('active');
+            elements.statusBadge.textContent = 'Выигрыш';
+            elements.statusBadge.className = 'status-badge status-ready';
+            elements.multiplier.className = 'multiplier-value good';
+
+            elements.mainButton.textContent = 'Сделать ставку';
+            elements.mainButton.className = 'main-button btn-place-bet';
+            elements.mainButton.disabled = false;
+
+            elements.multiplierOverlay.innerHTML = `
+                <div class="win-overlay">
+                    <div class="win-amount">+${formatMoney(winAmount)}</div>
+                    <div class="win-label">Выигрыш</div>
+                </div>
+            `;
+
+            setTimeout(() => resetMultiplierDisplay(), 2000);
+        }
+
+        function crash() {
+            clearInterval(gameInterval);
+            gameInterval = null;
+
+            state.isRunning = false;
+
+            elements.statusBadge.textContent = 'КРАШ';
+            elements.statusBadge.className = 'status-badge status-crashed';
+
+            if (state.hasBet) {
+                addHistory(state.crashPoint, false, state.currentBet, 0);
+            }
+
+            // Animate robot exit
+            if (window.robotExit) window.robotExit();
+
+            state.hasBet = false;
+            state.currentBet = 0;
+
+            elements.currentBetCard.classList.remove('active');
+            updateDisplay();
+            saveGameData();
+
+            elements.multiplierOverlay.innerHTML = `
+                <div class="crash-result">
+                    <div class="crash-text">КРАШ</div>
+                    <div class="crash-multiplier">${state.crashPoint.toFixed(2)}x</div>
+                </div>
+            `;
+
+            elements.mainButton.textContent = 'Сделать ставку';
+            elements.mainButton.className = 'main-button btn-place-bet';
+            elements.mainButton.disabled = false;
+
+            setTimeout(() => {
+                elements.statusBadge.textContent = 'Ожидание';
+                elements.statusBadge.className = 'status-badge';
+                resetMultiplierDisplay();
+            }, 2500);
+        }
+
+        function resetMultiplierDisplay() {
+            elements.multiplierOverlay.innerHTML = `
+                <div class="multiplier-container">
+                    <span class="multiplier-value idle" id="multiplier">1.00</span>
+                    <span class="multiplier-x">x</span>
+                </div>
+                <div class="multiplier-hint" id="multiplier-hint">Сделайте ставку</div>
+            `;
+
+            elements.multiplier = document.getElementById('multiplier');
+            elements.multiplierHint = document.getElementById('multiplier-hint');
+        }
+
+        function addHistory(crashPoint, won, betAmount, winAmount) {
+            state.history.unshift({
+                crashPoint,
+                won,
+                betAmount,
+                winAmount,
+                profit: won ? winAmount - betAmount : -betAmount,
+                time: new Date()
+            });
+
+            if (state.history.length > 20) state.history.pop();
+            renderHistory();
+        }
+
+        function renderHistory() {
+            if (state.history.length === 0) {
+                elements.historyList.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: rgba(255,255,255,0.2); font-size: 12px;">
+                        История пуста
+                    </div>
+                `;
+                return;
+            }
+
+            elements.historyList.innerHTML = state.history.map(h => `
+                <div class="history-item">
+                    <span class="history-time">${h.time.toLocaleTimeString()}</span>
+                    <div class="history-result">
+                        <span class="history-multiplier ${h.won ? 'win' : 'loss'}">
+                            ${h.crashPoint.toFixed(2)}x
+                        </span>
+                        <span class="history-profit ${h.profit >= 0 ? 'positive' : 'negative'}">
+                            ${h.profit >= 0 ? '+' : ''}${formatMoney(h.profit)}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Initialize
+        loadGameData();
+        loadTelegramProfile();
+        updateDisplay();
+
+        // THREE.JS Scene
+        (function initScene() {
+            var HEIGHT = window.innerHeight;
+            var WIDTH = window.innerWidth;
+            var scene = new THREE.Scene();
+
+            var aspectRatio = WIDTH / HEIGHT;
+            var camera = new THREE.PerspectiveCamera(55, aspectRatio, 1, 10000);
+            camera.position.set(0, 0, 250);
+            scene.add(camera);
+            scene.fog = new THREE.Fog(0x0a0a0a, 150, 500);
+
+            var renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(WIDTH, HEIGHT);
+            renderer.setClearColor(0x0a0a0a, 1);
+            renderer.shadowMap.enabled = true;
+
+            var container = document.getElementById('container');
+            container.appendChild(renderer.domElement);
+
+            window.addEventListener('resize', function() {
+                HEIGHT = window.innerHeight;
+                WIDTH = window.innerWidth;
+                renderer.setSize(WIDTH, HEIGHT);
+                camera.aspect = WIDTH / HEIGHT;
+                camera.updateProjectionMatrix();
+            });
+
+            // Lights
+            var ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+            var shadowLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            shadowLight.position.set(150, 350, 350);
+            scene.add(ambientLight);
+            scene.add(shadowLight);
+
+            // Premium VIP Colors
+            var Colors = {
+                body: 0x1a1a1a,
+                accent: 0x2d2d2d,
+                highlight: 0x404040,
+                glow: 0xffffff,
+                gold: 0xc9a227,
+                glass: 0x111111,
+            };
+
+            // Stars - MANY MORE stars in the sky
+            var StarsArray = [];
+
+            function createStars() {
+                var starsGroup = new THREE.Object3D();
+
+                // Layer 1 - small distant stars
+                for (var i = 0; i < 300; i++) {
+                    var geom = new THREE.SphereGeometry(0.5 + Math.random() * 0.5, 4, 4);
+                    var mat = new THREE.MeshBasicMaterial({
+                        color: 0xffffff,
+                        transparent: true,
+                        opacity: 0.3 + Math.random() * 0.5
+                    });
+                    var mesh = new THREE.Mesh(geom, mat);
+                    mesh.position.set(
+                        -400 + Math.random() * 800,
+                        -200 + Math.random() * 600,
+                        -300 + Math.random() * 200
+                    );
+                    mesh.userData.twinkleSpeed = 0.002 + Math.random() * 0.005;
+                    mesh.userData.twinkleOffset = Math.random() * Math.PI * 2;
+                    starsGroup.add(mesh);
+                    StarsArray.push(mesh);
+                }
+
+                // Layer 2 - medium stars
+                for (var i = 0; i < 150; i++) {
+                    var geom = new THREE.SphereGeometry(0.8 + Math.random() * 0.8, 6, 6);
+                    var mat = new THREE.MeshBasicMaterial({
+                        color: 0xffffff,
+                        transparent: true,
+                        opacity: 0.4 + Math.random() * 0.4
+                    });
+                    var mesh = new THREE.Mesh(geom, mat);
+                    mesh.position.set(
+                        -400 + Math.random() * 800,
+                        -200 + Math.random() * 600,
+                        -250 + Math.random() * 150
+                    );
+                    mesh.userData.twinkleSpeed = 0.003 + Math.random() * 0.006;
+                    mesh.userData.twinkleOffset = Math.random() * Math.PI * 2;
+                    starsGroup.add(mesh);
+                    StarsArray.push(mesh);
+                }
+
+                // Layer 3 - bright stars with glow
+                for (var i = 0; i < 80; i++) {
+                    var geom = new THREE.SphereGeometry(1.2 + Math.random() * 1.0, 8, 8);
+                    var mat = new THREE.MeshBasicMaterial({
+                        color: 0xffffff,
+                        transparent: true,
+                        opacity: 0.5 + Math.random() * 0.5
+                    });
+                    var mesh = new THREE.Mesh(geom, mat);
+                    mesh.position.set(
+                        -400 + Math.random() * 800,
+                        -200 + Math.random() * 600,
+                        -200 + Math.random() * 100
+                    );
+                    mesh.userData.twinkleSpeed = 0.004 + Math.random() * 0.008;
+                    mesh.userData.twinkleOffset = Math.random() * Math.PI * 2;
+                    starsGroup.add(mesh);
+                    StarsArray.push(mesh);
+                }
+
+                // Layer 4 - colored stars (blue/white tint)
+                for (var i = 0; i < 40; i++) {
+                    var geom = new THREE.SphereGeometry(1.5 + Math.random() * 1.2, 8, 8);
+                    var blueTint = Math.random() > 0.5;
+                    var mat = new THREE.MeshBasicMaterial({
+                        color: blueTint ? 0xaaccff : 0xffffcc,
+                        transparent: true,
+                        opacity: 0.6 + Math.random() * 0.4
+                    });
+                    var mesh = new THREE.Mesh(geom, mat);
+                    mesh.position.set(
+                        -400 + Math.random() * 800,
+                        -200 + Math.random() * 600,
+                        -180 + Math.random() * 80
+                    );
+                    mesh.userData.twinkleSpeed = 0.005 + Math.random() * 0.01;
+                    mesh.userData.twinkleOffset = Math.random() * Math.PI * 2;
+                    starsGroup.add(mesh);
+                    StarsArray.push(mesh);
+                }
+
+                scene.add(starsGroup);
+            }
+
+            // Stylish Robot
+            var robot, robotParts = {};
+            var eyeGlow = [];
+            var jetStreamL, jetStreamR;
+            var ParticleArray = [];
+
+            function createRobot() {
+                robot = new THREE.Object3D();
+
+                // Premium materials
+                var bodyMat = new THREE.MeshPhongMaterial({
+                    color: Colors.body,
+                    flatShading: true,
+                    shininess: 80
+                });
+                var accentMat = new THREE.MeshPhongMaterial({
+                    color: Colors.accent,
+                    flatShading: true,
+                    shininess: 100
+                });
+                var highlightMat = new THREE.MeshPhongMaterial({
+                    color: Colors.highlight,
+                    flatShading: true,
+                    shininess: 120
+                });
+                var glassMat = new THREE.MeshPhongMaterial({
+                    color: Colors.glass,
+                    flatShading: true,
+                    transparent: true,
+                    opacity: 0.9
+                });
+                var glowMat = new THREE.MeshBasicMaterial({
+                    color: Colors.glow,
+                    transparent: true,
+                    opacity: 0.9
+                });
+                var goldMat = new THREE.MeshPhongMaterial({
+                    color: Colors.gold,
+                    flatShading: true,
+                    shininess: 150
+                });
+
+                // === HEAD - Rounded futuristic design ===
+                var headGroup = new THREE.Object3D();
+
+                // Main head - rounded box using sphere
+                var geomHead = new THREE.SphereGeometry(28, 16, 12);
+                geomHead.scale(1.2, 0.9, 0.8);
+                var head = new THREE.Mesh(geomHead, bodyMat);
+                headGroup.add(head);
+
+                // Visor (eye slot)
+                var geomVisor = new THREE.BoxGeometry(45, 12, 8);
+                var visor = new THREE.Mesh(geomVisor, glassMat);
+                visor.position.set(0, 5, 18);
+                headGroup.add(visor);
+
+                // Glowing eyes - stylish horizontal LED style
+                var geomEye = new THREE.BoxGeometry(14, 4, 2);
+                var eyeL = new THREE.Mesh(geomEye, glowMat);
+                eyeL.position.set(12, 5, 24);
+                eyeGlow.push(eyeL);
+
+                var eyeR = eyeL.clone();
+                eyeR.position.x = -12;
+                eyeGlow.push(eyeR);
+
+                robotParts.eyes = new THREE.Object3D();
+                robotParts.eyes.add(eyeL, eyeR);
+                headGroup.add(robotParts.eyes);
+
+                // Gold trim around visor
+                var geomTrim = new THREE.BoxGeometry(48, 2, 6);
+                var trimTop = new THREE.Mesh(geomTrim, goldMat);
+                trimTop.position.set(0, 13, 18);
+                headGroup.add(trimTop);
+
+                var trimBottom = trimTop.clone();
+                trimBottom.position.y = -3;
+                headGroup.add(trimBottom);
+
+                // Antennae - sleek minimalist
+                var geomAntenna = new THREE.CylinderGeometry(1.5, 2, 20, 8);
+                var antennaL = new THREE.Mesh(geomAntenna, highlightMat);
+                antennaL.position.set(15, 28, 0);
+                antennaL.rotation.z = 0.3;
+                headGroup.add(antennaL);
+
+                var antennaR = antennaL.clone();
+                antennaR.position.x = -15;
+                antennaR.rotation.z = -0.3;
+                headGroup.add(antennaR);
+
+                // Antenna tips (glowing)
+                var geomTip = new THREE.SphereGeometry(3, 8, 8);
+                var tipL = new THREE.Mesh(geomTip, goldMat);
+                tipL.position.set(20, 42, 0);
+                headGroup.add(tipL);
+
+                var tipR = tipL.clone();
+                tipR.position.x = -20;
+                headGroup.add(tipR);
+
+                robotParts.headCont = new THREE.Object3D();
+                robotParts.headCont.add(headGroup);
+                robot.add(robotParts.headCont);
+
+                // === NECK - articulated style ===
+                var geomNeck = new THREE.CylinderGeometry(8, 10, 18, 8);
+                var neck = new THREE.Mesh(geomNeck, bodyMat);
+                neck.position.y = -32;
+                headGroup.add(neck);
+
+                // Neck ring
+                var geomNeckRing = new THREE.TorusGeometry(10, 2, 8, 16);
+                var neckRing = new THREE.Mesh(geomNeckRing, goldMat);
+                neckRing.position.y = -38;
+                neckRing.rotation.x = Math.PI / 2;
+                headGroup.add(neckRing);
+
+                // === TORSO - Sleek armor plates ===
+                var torsoGroup = new THREE.Object3D();
+
+                // Main torso - angular design
+                var geomTorso = new THREE.BoxGeometry(50, 55, 35);
+                var torso = new THREE.Mesh(geomTorso, bodyMat);
+                torsoGroup.add(torso);
+
+                // Chest plate accent
+                var geomChest = new THREE.BoxGeometry(35, 40, 5);
+                var chestPlate = new THREE.Mesh(geomChest, accentMat);
+                chestPlate.position.set(0, 5, 18);
+                torsoGroup.add(chestPlate);
+
+                // Center line accent
+                var geomLine = new THREE.BoxGeometry(4, 50, 6);
+                var centerLine = new THREE.Mesh(geomLine, highlightMat);
+                centerLine.position.set(0, 0, 20);
+                torsoGroup.add(centerLine);
+
+                // LED indicator strip
+                var geomLED = new THREE.BoxGeometry(20, 3, 3);
+                var ledTop = new THREE.Mesh(geomLED, glowMat);
+                ledTop.position.set(0, 20, 21);
+                torsoGroup.add(ledTop);
+
+                // ASSORTI text plate on chest
+                var textCanvas = document.createElement('canvas');
+                textCanvas.width = 256;
+                textCanvas.height = 64;
+                var ctx = textCanvas.getContext('2d');
+                ctx.fillStyle = '#c9a227';
+                ctx.font = 'bold 36px Arial, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('ASSORTI', 128, 32);
+
+                var textTexture = new THREE.CanvasTexture(textCanvas);
+                var textMat = new THREE.MeshBasicMaterial({
+                    map: textTexture,
+                    transparent: true,
+                    side: THREE.DoubleSide
+                });
+                var geomText = new THREE.PlaneGeometry(40, 10);
+                var textMesh = new THREE.Mesh(geomText, textMat);
+                textMesh.position.set(0, -12, 23);
+                torsoGroup.add(textMesh);
+
+                // Core reactor (glowing center)
+                var geomCore = new THREE.OctahedronGeometry(8, 0);
+                var core = new THREE.Mesh(geomCore, glowMat);
+                core.position.set(0, 0, 22);
+                core.rotation.z = Math.PI / 4;
+                torsoGroup.add(core);
+                robotParts.core = core;
+
+                // Shoulder pads - angular
+                var geomShoulder = new THREE.BoxGeometry(18, 12, 25);
+                var shoulderL = new THREE.Mesh(geomShoulder, accentMat);
+                shoulderL.position.set(30, 22, 0);
+                shoulderL.rotation.z = 0.3;
+                torsoGroup.add(shoulderL);
+
+                var shoulderR = shoulderL.clone();
+                shoulderR.position.x = -30;
+                shoulderR.rotation.z = -0.3;
+                torsoGroup.add(shoulderR);
+
+                // Gold shoulder trim
+                var geomShoulderTrim = new THREE.BoxGeometry(20, 2, 27);
+                var trimL = new THREE.Mesh(geomShoulderTrim, goldMat);
+                trimL.position.set(30, 28, 0);
+                torsoGroup.add(trimL);
+
+                var trimR = trimL.clone();
+                trimR.position.x = -30;
+                torsoGroup.add(trimR);
+
+                // Lower torso (waist)
+                var geomWaist = new THREE.BoxGeometry(40, 15, 30);
+                var waist = new THREE.Mesh(geomWaist, bodyMat);
+                waist.position.y = -35;
+                torsoGroup.add(waist);
+
+                // Jet pack
+                var geomJetBase = new THREE.BoxGeometry(35, 30, 8);
+                var jetBase = new THREE.Mesh(geomJetBase, bodyMat);
+                jetBase.position.set(0, 0, -22);
+                torsoGroup.add(jetBase);
+
+                var geomJetCyl = new THREE.CylinderGeometry(10, 8, 45, 12);
+                var jetL = new THREE.Mesh(geomJetCyl, highlightMat);
+                jetL.position.set(15, 0, -32);
+                torsoGroup.add(jetL);
+
+                var jetR = jetL.clone();
+                jetR.position.x = -15;
+                torsoGroup.add(jetR);
+
+                // Jet glow rings
+                var geomJetRing = new THREE.TorusGeometry(9, 1.5, 8, 16);
+                var ringL = new THREE.Mesh(geomJetRing, goldMat);
+                ringL.position.set(15, -22, -32);
+                ringL.rotation.x = Math.PI / 2;
+                torsoGroup.add(ringL);
+
+                var ringR = ringL.clone();
+                ringR.position.x = -15;
+                torsoGroup.add(ringR);
+
+                robot.add(torsoGroup);
+
+                // Create and attach jet streams to robot
+                createJets();
+                robot.add(jetStreamL);
+                robot.add(jetStreamR);
+
+                // === ARMS - Sleek segmented design ===
+                // Left arm
+                robotParts.armLeft = new THREE.Object3D();
+
+                var geomUpperArm = new THREE.BoxGeometry(10, 30, 10);
+                var upperArmL = new THREE.Mesh(geomUpperArm, bodyMat);
+                upperArmL.position.set(0, 0, 0);
+                robotParts.armLeft.add(upperArmL);
+
+                // Arm accent stripe
+                var geomStripe = new THREE.BoxGeometry(4, 28, 2);
+                var stripeL = new THREE.Mesh(geomStripe, goldMat);
+                stripeL.position.set(0, 0, 6);
+                upperArmL.add(stripeL);
+
+                // Elbow
+                var geomElbow = new THREE.SphereGeometry(7, 8, 8);
+                var elbowL = new THREE.Mesh(geomElbow, accentMat);
+                elbowL.position.y = -18;
+                upperArmL.add(elbowL);
+
+                // Forearm
+                var geomForearm = new THREE.BoxGeometry(8, 25, 8);
+                var forearmL = new THREE.Mesh(geomForearm, bodyMat);
+                forearmL.position.set(0, -38, 5);
+                forearmL.rotation.x = 0.5;
+                robotParts.armLeft.add(forearmL);
+
+                // Hand
+                var geomHand = new THREE.BoxGeometry(15, 18, 8);
+                var handL = new THREE.Mesh(geomHand, accentMat);
+                handL.position.set(0, -55, 15);
+                robotParts.armLeft.add(handL);
+
+                robotParts.armLeft.position.set(42, 15, 0);
+                robotParts.armLeft.rotation.z = 0.5;
+                robot.add(robotParts.armLeft);
+
+                // Right arm (mirrored)
+                robotParts.armRight = robotParts.armLeft.clone();
+                robotParts.armRight.position.x = -42;
+                robotParts.armRight.rotation.z = -0.5;
+                robotParts.armRight.rotation.y = Math.PI;
+                robot.add(robotParts.armRight);
+
+                // === LEGS - Powerful stance ===
+                // Left leg
+                robotParts.legLeft = new THREE.Object3D();
+
+                // Upper leg
+                var geomUpperLeg = new THREE.BoxGeometry(12, 35, 12);
+                var upperLegL = new THREE.Mesh(geomUpperLeg, bodyMat);
+                upperLegL.position.y = 0;
+                robotParts.legLeft.add(upperLegL);
+
+                // Leg stripe
+                var geomLegStripe = new THREE.BoxGeometry(3, 32, 2);
+                var legStripeL = new THREE.Mesh(geomLegStripe, goldMat);
+                legStripeL.position.set(0, 0, 7);
+                upperLegL.add(legStripeL);
+
+                // Knee
+                var geomKnee = new THREE.SphereGeometry(8, 8, 8);
+                var kneeL = new THREE.Mesh(geomKnee, accentMat);
+                kneeL.position.y = -22;
+                upperLegL.add(kneeL);
+
+                // Lower leg
+                var geomLowerLeg = new THREE.BoxGeometry(10, 30, 10);
+                var lowerLegL = new THREE.Mesh(geomLowerLeg, bodyMat);
+                lowerLegL.position.set(0, -42, 3);
+                lowerLegL.rotation.x = 0.2;
+                robotParts.legLeft.add(lowerLegL);
+
+                // Foot
+                var geomFoot = new THREE.BoxGeometry(20, 8, 30);
+                var footL = new THREE.Mesh(geomFoot, accentMat);
+                footL.position.set(0, -60, 8);
+                robotParts.legLeft.add(footL);
+
+                // Foot trim
+                var geomFootTrim = new THREE.BoxGeometry(22, 2, 32);
+                var footTrimL = new THREE.Mesh(geomFootTrim, goldMat);
+                footTrimL.position.set(0, -56, 8);
+                robotParts.legLeft.add(footTrimL);
+
+                robotParts.legLeft.position.set(18, -50, 0);
+                robot.add(robotParts.legLeft);
+
+                // Right leg
+                robotParts.legRight = robotParts.legLeft.clone();
+                robotParts.legRight.position.x = -18;
+                robot.add(robotParts.legRight);
+
+                // Position head
+                headGroup.position.y = 45;
+
+                // Initial position - off screen bottom right
+                robot.position.set(250, -250, 50);
+                robot.rotation.y = 0.6;
+                robot.scale.set(0.08, 0.08, 0.08);
+
+                scene.add(robot);
+            }
+
+            function createJets() {
+                jetStreamL = new THREE.Object3D();
+                jetStreamR = new THREE.Object3D();
+
+                var colors = [0xffffff, 0xcccccc, 0x999999, 0x666666, 0xaaaaaa, 0xdddddd];
+
+                for (var i = 0; i < 80; i++) {
+                    var size = 1.5 + Math.random() * 3.5;
+                    var geom = new THREE.SphereGeometry(size, 6, 6);
+                    var mat = new THREE.MeshBasicMaterial({
+                        color: colors[Math.floor(Math.random() * colors.length)],
+                        transparent: true,
+                        opacity: 0.3 + Math.random() * 0.6
+                    });
+                    var mesh = new THREE.Mesh(geom, mat);
+                    mesh.position.set(
+                        Math.random() * 15 - 7.5,
+                        Math.random() * 60,
+                        Math.random() * 15 - 7.5
+                    );
+                    mesh.userData.baseY = mesh.position.y;
+                    mesh.userData.baseOpacity = mat.opacity;
+                    mesh.userData.speed = 0.8 + Math.random() * 1.2;
+                    ParticleArray.push({ mesh: mesh, mat: mat, stream: 'L' });
+                    jetStreamL.add(mesh);
+                }
+
+                for (var i = 0; i < 80; i++) {
+                    var size = 1.5 + Math.random() * 3.5;
+                    var geom = new THREE.SphereGeometry(size, 6, 6);
+                    var mat = new THREE.MeshBasicMaterial({
+                        color: colors[Math.floor(Math.random() * colors.length)],
+                        transparent: true,
+                        opacity: 0.3 + Math.random() * 0.6
+                    });
+                    var mesh = new THREE.Mesh(geom, mat);
+                    mesh.position.set(
+                        Math.random() * 15 - 7.5,
+                        Math.random() * 60,
+                        Math.random() * 15 - 7.5
+                    );
+                    mesh.userData.baseY = mesh.position.y;
+                    mesh.userData.baseOpacity = mat.opacity;
+                    mesh.userData.speed = 0.8 + Math.random() * 1.2;
+                    ParticleArray.push({ mesh: mesh, mat: mat, stream: 'R' });
+                    jetStreamR.add(mesh);
+                }
+
+                jetStreamL.position.set(15, -15, -40);
+                jetStreamR.position.set(-15, -15, -40);
+
+                jetStreamL.visible = false;
+                jetStreamR.visible = false;
+            }
+
+            // Robot entrance animation
+            window.robotEnter = function() {
+                if (!robot) return;
+
+                if (jetStreamL && jetStreamR) {
+                    jetStreamL.visible = true;
+                    jetStreamR.visible = true;
+                }
+
+                robot.position.set(250, -250, 50);
+                robot.rotation.y = 0.6;
+                robot.rotation.z = -0.15;
+                robot.scale.set(0.08, 0.08, 0.08);
+
+                var tl = new TimelineMax();
+
+                tl.to(robot.position, 1.5, {
+                    x: 0,
+                    y: 0,
+                    z: 0,
+                    ease: Power2.easeOut
+                }, 0);
+
+                tl.to(robot.rotation, 1.5, {
+                    y: 0,
+                    z: 0,
+                    ease: Power2.easeOut
+                }, 0);
+
+                tl.to(robot.scale, 1.5, {
+                    x: 0.55,
+                    y: 0.55,
+                    z: 0.55,
+                    ease: Power2.easeOut
+                }, 0);
+            };
+
+            // Robot exit animation - COMPLETELY SMOOTH, NO TELEPORT
+            window.robotExit = function() {
+                if (!robot) return;
+
+                if (jetStreamL && jetStreamR) {
+                    jetStreamL.visible = true;
+                    jetStreamR.visible = true;
+                }
+
+                var tl = new TimelineMax({
+                    onComplete: function() {
+                        // After exit animation, smoothly fly back to start position
+                        if (jetStreamL && jetStreamR) {
+                            jetStreamL.visible = false;
+                            jetStreamR.visible = false;
+                        }
+
+                        // SMOOTH return to start position (no teleport)
+                        var returnTl = new TimelineMax();
+                        returnTl.to(robot.position, 1.5, {
+                            x: 250,
+                            y: -250,
+                            z: 50,
+                            ease: Power2.easeInOut
+                        }, 0);
+                        returnTl.to(robot.rotation, 1.5, {
+                            y: 0.6,
+                            z: -0.15,
+                            ease: Power2.easeInOut
+                        }, 0);
+                        returnTl.to(robot.scale, 1.5, {
+                            x: 0.08,
+                            y: 0.08,
+                            z: 0.08,
+                            ease: Power2.easeInOut
+                        }, 0);
+                    }
+                });
+
+                // Phase 1: Rise and start rotation
+                tl.to(robot.position, 0.4, {
+                    y: 40,
+                    ease: Power2.easeOut
+                }, 0);
+
+                tl.to(robot.rotation, 0.4, {
+                    y: -0.3,
+                    z: 0.08,
+                    ease: Power2.easeOut
+                }, 0);
+
+                // Phase 2: Arc motion upward and left
+                tl.to(robot.position, 0.5, {
+                    y: 150,
+                    x: -100,
+                    z: 50,
+                    ease: Power1.easeInOut
+                }, 0.4);
+
+                tl.to(robot.rotation, 0.5, {
+                    y: -0.8,
+                    z: 0.15,
+                    ease: Power1.easeInOut
+                }, 0.4);
+
+                // Phase 3: Continue arc
+                tl.to(robot.position, 0.4, {
+                    y: 250,
+                    x: -200,
+                    z: 100,
+                    ease: Power1.easeIn
+                }, 0.9);
+
+                tl.to(robot.rotation, 0.4, {
+                    y: -1.2,
+                    z: 0.2,
+                    ease: Power1.easeIn
+                }, 0.9);
+
+                // Scale down gradually throughout
+                tl.to(robot.scale, 0.8, {
+                    x: 0.25,
+                    y: 0.25,
+                    z: 0.25,
+                    ease: Power1.easeOut
+                }, 0);
+
+                tl.to(robot.scale, 0.5, {
+                    x: 0.08,
+                    y: 0.08,
+                    z: 0.08,
+                    ease: Power2.easeIn
+                }, 0.8);
+            };
+
+            // Animation loop
+            function animate() {
+                var t = Date.now();
+
+                // Stars twinkling
+                for (var i = 0; i < StarsArray.length; i++) {
+                    var star = StarsArray[i];
+                    var twinkle = Math.sin(t * star.userData.twinkleSpeed + star.userData.twinkleOffset);
+                    star.material.opacity = 0.3 + (twinkle + 1) * 0.35;
+                    star.scale.setScalar(0.8 + (twinkle + 1) * 0.2);
+                }
+
+                if (robot) {
+                    // Head subtle movement
+                    if (robotParts.headCont) {
+                        robotParts.headCont.rotation.z = Math.sin(t * 0.002) * 0.03;
+                        robotParts.headCont.rotation.x = Math.cos(t * 0.0015) * 0.02;
+                    }
+
+                    // Core reactor spin
+                    if (robotParts.core) {
+                        robotParts.core.rotation.y += 0.02;
+                        robotParts.core.rotation.x += 0.01;
+                    }
+
+                    // Arm movements
+                    if (robotParts.armLeft) {
+                        robotParts.armLeft.rotation.x = Math.sin(t * 0.002) * 0.15;
+                    }
+
+                    if (robotParts.armRight) {
+                        robotParts.armRight.rotation.x = Math.sin(t * 0.002 + 0.5) * 0.15;
+                    }
+
+                    // Leg movements
+                    if (robotParts.legLeft) {
+                        robotParts.legLeft.rotation.x = Math.sin(t * 0.002) * 0.03;
+                    }
+
+                    if (robotParts.legRight) {
+                        robotParts.legRight.rotation.x = Math.sin(t * 0.002 + 1) * 0.03;
+                    }
+
+                    // Floating hover when centered
+                    if (Math.abs(robot.position.x) < 50 && Math.abs(robot.position.y) < 50) {
+                        robot.position.y = Math.sin(t * 0.003) * 8;
+                        robot.position.x = Math.sin(t * 0.002) * 4;
+                    }
+                }
+
+                // Eye glow pulsing
+                for (var i = 0; i < eyeGlow.length; i++) {
+                    if (eyeGlow[i]) {
+                        eyeGlow[i].material.opacity = 0.7 + Math.sin(t * 0.01) * 0.3;
+                    }
+                }
+
+                // Jet particles
+                if (robot && jetStreamL && jetStreamL.visible) {
+                    for (var i = 0; i < ParticleArray.length; i++) {
+                        var p = ParticleArray[i];
+                        var speed = p.mesh.userData.speed || 1;
+                        p.mesh.position.y -= speed * (1.2 + Math.random() * 0.8);
+                        p.mesh.scale.multiplyScalar(0.96);
+                        p.mat.opacity *= 0.96;
+
+                        if (p.mesh.position.y <= -60 || p.mat.opacity < 0.05) {
+                            p.mesh.position.y = p.mesh.userData.baseY || 0;
+                            p.mesh.position.x = Math.random() * 15 - 7.5;
+                            p.mesh.position.z = Math.random() * 15 - 7.5;
+                            p.mesh.scale.set(1, 1, 1);
+                            p.mat.opacity = p.mesh.userData.baseOpacity || 0.5;
+                        }
+                    }
+                }
+
+                // Blink animation
+                if (robotParts.eyes && Math.random() > 0.997) {
+                    TweenMax.to(robotParts.eyes.scale, 0.08, {
+                        y: 0,
+                        yoyo: true,
+                        repeat: 1
+                    });
+                }
+            }
+
+            function loop() {
+                requestAnimationFrame(loop);
+                animate();
+                renderer.render(scene, camera);
+            }
+
+            createStars();
+            createRobot();
+            loop();
+        })();
+    </script>
+</body>
+</html>
