@@ -4,1404 +4,452 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>КРАШ - Приват Ассорти</title>
+
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- TON Connect UI -->
+    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+
+    <!-- Three.js + GSAP -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/109/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/2.1.3/TweenMax.min.js"></script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #0a0a0a;
             color: #fff;
             min-height: 100vh;
             overflow-x: hidden;
         }
 
-        .game-container {
+        /* ====== AUTH SCREEN ====== */
+        #auth-screen {
+            position: fixed;
+            inset: 0;
+            background: #0a0a0a;
             display: flex;
             flex-direction: column;
-            height: 100vh;
-            max-width: 1800px;
-            margin: 0 auto;
-            padding: 16px;
-            gap: 16px;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            gap: 20px;
         }
+        #auth-screen .logo { font-size: 32px; font-weight: 700; letter-spacing: 6px; }
+        #auth-screen .sub { font-size: 12px; color: rgba(255,255,255,0.3); letter-spacing: 3px; }
+        #auth-screen .spinner {
+            width: 40px; height: 40px;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-top-color: rgba(255,255,255,0.6);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        #auth-screen .auth-error {
+            font-size: 13px; color: #ff5050; text-align: center;
+            max-width: 280px; line-height: 1.6;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Mobile Layout */
-        body.mobile .game-container {
-            padding: 8px;
-            gap: 8px;
+        /* ====== GAME CONTAINER ====== */
+        .game-container {
+            display: flex; flex-direction: column;
+            height: 100vh; max-width: 1800px;
+            margin: 0 auto; padding: 16px; gap: 16px;
         }
-
-        body.mobile .main-area {
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        body.mobile .canvas-container {
-            min-height: 360px;
-            max-height: 50vh;
-            flex: 0 0 auto;
-        }
-
-        body.mobile .control-panel {
-            width: 100%;
-            flex-direction: column;
-            gap: 8px;
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        body.mobile .panel-card {
-            padding: 14px;
-        }
-
-        body.mobile .header {
-            padding: 10px 14px;
-        }
-
-        body.mobile .logo {
-            font-size: 16px;
-            letter-spacing: 2px;
-        }
-
-        body.mobile .logo-subtitle {
-            font-size: 8px;
-        }
-
-        body.mobile .balance-amount {
-            font-size: 18px;
-        }
-
-        body.mobile .balance-card {
-            padding: 8px 14px;
-            gap: 10px;
-        }
-
-        body.mobile .balance-icon {
-            width: 32px;
-            height: 32px;
-            font-size: 14px;
-        }
-
-        body.mobile .deposit-btn {
-            width: 36px;
-            height: 36px;
-            font-size: 20px;
-        }
-
-        body.mobile .multiplier-value {
-            font-size: 52px;
-        }
-
-        body.mobile .multiplier-x {
-            font-size: 26px;
-        }
-
-        body.mobile .quick-bet-grid {
-            grid-template-columns: repeat(4, 1fr);
-        }
-
-        body.mobile .quick-btn {
-            padding: 10px 6px;
-            font-size: 12px;
-        }
-
-        body.mobile .bet-input {
-            font-size: 18px;
-            padding: 14px 60px 14px 14px;
-        }
-
-        body.mobile .main-button {
-            padding: 16px;
-            font-size: 13px;
-        }
-
-        body.mobile .stats-grid {
-            grid-template-columns: repeat(4, 1fr);
-        }
-
-        body.mobile .stat-value {
-            font-size: 14px;
-        }
-
-        body.mobile .stat-label {
-            font-size: 8px;
-        }
-
-        body.mobile .game-status-bar {
-            top: 10px;
-            left: 12px;
-            right: 12px;
-        }
-
-        body.mobile .status-badge {
-            padding: 6px 12px;
-            font-size: 10px;
-        }
-
-        body.mobile .round-item {
-            padding: 6px 10px;
-        }
-
-        body.mobile .round-label {
-            font-size: 8px;
-        }
-
-        body.mobile .round-value {
-            font-size: 12px;
-        }
-
-        body.mobile .rate-value {
-            font-size: 22px;
-        }
+        body.mobile .game-container { padding: 8px; gap: 8px; }
+        body.mobile .main-area { flex-direction: column; gap: 8px; }
+        body.mobile .canvas-container { min-height: 360px; max-height: 50vh; flex: 0 0 auto; }
+        body.mobile .control-panel { width: 100%; flex-direction: column; gap: 8px; flex: 1; overflow-y: auto; }
+        body.mobile .panel-card { padding: 14px; }
+        body.mobile .header { padding: 10px 14px; }
+        body.mobile .logo { font-size: 16px; letter-spacing: 2px; }
+        body.mobile .logo-subtitle { font-size: 8px; }
+        body.mobile .balance-amount { font-size: 18px; }
+        body.mobile .balance-card { padding: 8px 14px; gap: 10px; }
+        body.mobile .balance-icon { width: 32px; height: 32px; font-size: 14px; }
+        body.mobile .multiplier-value { font-size: 52px; }
+        body.mobile .multiplier-x { font-size: 26px; }
+        body.mobile .quick-bet-grid { grid-template-columns: repeat(4, 1fr); }
+        body.mobile .quick-btn { padding: 10px 6px; font-size: 12px; }
+        body.mobile .bet-input { font-size: 18px; padding: 14px 60px 14px 14px; }
+        body.mobile .main-button { padding: 16px; font-size: 13px; }
+        body.mobile .stats-grid { grid-template-columns: repeat(4, 1fr); }
+        body.mobile .stat-value { font-size: 14px; }
+        body.mobile .stat-label { font-size: 8px; }
+        body.mobile .game-status-bar { top: 10px; left: 12px; right: 12px; }
+        body.mobile .status-badge { padding: 6px 12px; font-size: 10px; }
+        body.mobile .round-item { padding: 6px 10px; }
+        body.mobile .round-label { font-size: 8px; }
+        body.mobile .round-value { font-size: 12px; }
+        body.mobile .ton-connect-btn { padding: 8px 12px; font-size: 11px; }
 
         /* Header */
         .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            display: flex; justify-content: space-between; align-items: center;
             padding: 16px 32px;
             background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
-            border-radius: 16px;
-            border: 1px solid rgba(255,255,255,0.06);
-            flex-shrink: 0;
-            position: relative;
+            border-radius: 16px; border: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;
         }
+        .logo-section { display: flex; align-items: center; gap: 16px; }
+        .logo-icon { width: 48px; height: 48px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
+        .logo-icon img { width: 100%; height: 100%; object-fit: cover; }
+        .logo-text { display: flex; flex-direction: column; gap: 2px; }
+        .logo { font-size: 22px; font-weight: 700; color: #fff; letter-spacing: 4px; text-transform: uppercase; }
+        .logo-subtitle { font-size: 10px; color: rgba(255,255,255,0.35); letter-spacing: 3px; text-transform: uppercase; }
+        .header-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 
-        .logo-section {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .logo-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.1);
-            flex-shrink: 0;
-        }
-
-        .logo-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .logo-text {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .logo {
-            font-size: 22px;
-            font-weight: 700;
-            color: #fff;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-        }
-
-        .logo-subtitle {
-            font-size: 10px;
-            color: rgba(255,255,255,0.35);
-            letter-spacing: 3px;
-            text-transform: uppercase;
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .balance-section {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
+        /* Balance */
         .balance-card {
-            display: flex;
-            align-items: center;
-            gap: 16px;
+            display: flex; align-items: center; gap: 16px;
             background: linear-gradient(135deg, #1a1a1a 0%, #111 100%);
-            padding: 12px 24px;
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.08);
-            cursor: pointer;
-            transition: all 0.2s ease;
+            padding: 12px 24px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);
+            cursor: pointer; transition: all 0.2s ease;
         }
-
-        .balance-card:hover {
-            border-color: rgba(255,255,255,0.15);
-            background: linear-gradient(135deg, #222 0%, #161616 100%);
-        }
-
+        .balance-card:hover { border-color: rgba(255,255,255,0.15); background: linear-gradient(135deg, #222 0%, #161616 100%); }
         .balance-icon {
-            width: 40px;
-            height: 40px;
+            width: 40px; height: 40px;
             background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 18px;
-            color: rgba(255,255,255,0.8);
+            border-radius: 10px; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 18px; color: rgba(255,255,255,0.8);
         }
+        .balance-info { display: flex; flex-direction: column; }
+        .balance-label { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1.5px; }
+        .balance-amount { font-size: 24px; font-weight: 600; color: #fff; letter-spacing: -0.5px; }
+        .balance-amount span { color: rgba(255,255,255,0.4); font-size: 14px; }
 
-        .balance-info {
-            display: flex;
-            flex-direction: column;
+        /* TON Connect button */
+        .ton-connect-btn {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 18px; border-radius: 12px;
+            background: linear-gradient(135deg, #0088cc, #0066aa);
+            border: none; color: #fff; font-size: 13px; font-weight: 600;
+            cursor: pointer; transition: all 0.2s ease; white-space: nowrap;
         }
-
-        .balance-label {
-            font-size: 10px;
-            color: rgba(255,255,255,0.4);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
+        .ton-connect-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .ton-connect-btn.connected {
+            background: linear-gradient(135deg, #1a3a1a, #0d2010);
+            border: 1px solid rgba(74,222,128,0.3);
         }
-
-        .balance-amount {
-            font-size: 24px;
-            font-weight: 600;
-            color: #fff;
-            letter-spacing: -0.5px;
-        }
-
-        .balance-amount span {
-            color: rgba(255,255,255,0.4);
-            font-size: 14px;
-        }
-
+        .ton-wallet-short { font-size: 11px; opacity: 0.8; font-weight: 400; }
         .deposit-btn {
-            width: 44px;
-            height: 44px;
+            width: 44px; height: 44px;
             background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: rgba(255,255,255,0.7);
-            cursor: pointer;
-            transition: all 0.2s ease;
+            border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; color: rgba(255,255,255,0.7);
+            cursor: pointer; transition: all 0.2s ease;
         }
-
-        .deposit-btn:hover {
-            background: linear-gradient(135deg, #333, #222);
-            border-color: rgba(255,255,255,0.15);
-            color: #fff;
-        }
-
-        /* Rate Panel */
-        .rate-panel {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(180deg, #151515 0%, #0a0a0a 100%);
-            border-top: 1px solid rgba(255,255,255,0.08);
-            border-radius: 24px 24px 0 0;
-            padding: 24px;
-            transform: translateY(100%);
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 1002;
-            max-height: 85vh;
-            overflow-y: auto;
-        }
-
-        .rate-panel.active {
-            transform: translateY(0);
-        }
-
-        .rate-panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .rate-panel-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #fff;
-        }
-
-        .rate-panel-close {
-            width: 36px;
-            height: 36px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 20px;
-            color: rgba(255,255,255,0.6);
-            transition: all 0.2s ease;
-        }
-
-        .rate-panel-close:hover {
-            background: rgba(255,255,255,0.1);
-            color: #fff;
-        }
-
-        .rate-info {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(255,255,255,0.03);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .rate-main {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .rate-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, #0088cc, #0066aa);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 14px;
-            color: #fff;
-        }
-
-        .rate-value {
-            font-size: 28px;
-            font-weight: 600;
-            color: #fff;
-        }
-
-        .rate-currency {
-            font-size: 14px;
-            color: rgba(255,255,255,0.5);
-        }
-
-        .rate-change {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-        }
-
-        .rate-change-value {
-            font-size: 16px;
-            font-weight: 600;
-            color: #4ade80;
-        }
-
-        .rate-change-value.negative {
-            color: #ff6b6b;
-        }
-
-        .rate-change-label {
-            font-size: 12px;
-            color: rgba(255,255,255,0.4);
-        }
-
-        .chart-container {
-            background: rgba(255,255,255,0.02);
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 20px;
-        }
-
-        .chart-title {
-            font-size: 12px;
-            color: rgba(255,255,255,0.4);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 12px;
-        }
-
-        .chart-wrapper {
-            background: #0d0d0d;
-            border-radius: 12px;
-            overflow: hidden;
-            position: relative;
-            min-height: 320px;
-        }
-
-        .chart-iframe {
-            width: 100%;
-            height: 360px;
-            border: none;
-            display: block;
-        }
-
-        .chart-loading {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: rgba(255,255,255,0.4);
-            font-size: 14px;
-            background: #0d0d0d;
-            transition: opacity 0.5s ease;
-        }
-
-        .chart-loading.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .chart-fallback-btn {
-            display: block;
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #0088cc, #0066aa);
-            color: #fff;
-            border: none;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            text-align: center;
-            text-decoration: none;
-            margin-top: 12px;
-            transition: opacity 0.2s ease;
-        }
-
-        .chart-fallback-btn:hover {
-            opacity: 0.9;
-        }
-
-        /* Modal Overlay */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.85);
-            z-index: 1001;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-            backdrop-filter: blur(4px);
-        }
-
-        .modal-overlay.active {
-            opacity: 1;
-            pointer-events: all;
-        }
+        .deposit-btn:hover { background: linear-gradient(135deg, #333, #222); border-color: rgba(255,255,255,0.15); color: #fff; }
 
         /* Deposit Modal */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+            z-index: 1001; opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease; backdrop-filter: blur(4px);
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
         .modal {
-            position: fixed;
-            top: 50%;
-            left: 50%;
+            position: fixed; top: 50%; left: 50%;
             transform: translate(-50%, -50%) scale(0.9);
             background: linear-gradient(180deg, #151515 0%, #0d0d0d 100%);
-            border-radius: 24px;
-            padding: 32px;
-            width: 90%;
-            max-width: 560px;
-            max-height: 90vh;
-            overflow-y: auto;
-            border: 1px solid rgba(255,255,255,0.08);
-            z-index: 1002;
-            opacity: 0;
-            pointer-events: none;
+            border-radius: 24px; padding: 32px; width: 90%; max-width: 560px;
+            max-height: 90vh; overflow-y: auto;
+            border: 1px solid rgba(255,255,255,0.08); z-index: 1002;
+            opacity: 0; pointer-events: none;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-
-        .modal.active {
-            opacity: 1;
-            pointer-events: all;
-            transform: translate(-50%, -50%) scale(1);
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .modal-title {
-            font-size: 24px;
-            font-weight: 600;
-            color: #fff;
-        }
-
+        .modal.active { opacity: 1; pointer-events: all; transform: translate(-50%, -50%) scale(1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-title { font-size: 24px; font-weight: 600; color: #fff; }
         .modal-close {
-            width: 40px;
-            height: 40px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 24px;
-            color: rgba(255,255,255,0.6);
-            transition: all 0.2s ease;
-            line-height: 1;
+            width: 40px; height: 40px; background: rgba(255,255,255,0.05);
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 24px; color: rgba(255,255,255,0.6);
+            transition: all 0.2s ease; line-height: 1;
         }
-
-        .modal-close:hover {
-            background: rgba(255,255,255,0.1);
-            color: #fff;
-        }
+        .modal-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
 
         /* Bonus Banner */
         .bonus-banner {
             background: linear-gradient(135deg, #1a3a1a 0%, #0d2010 50%, #1a3a1a 100%);
-            border: 1px solid rgba(74, 222, 128, 0.25);
-            border-radius: 16px;
-            padding: 18px 20px;
-            margin-bottom: 20px;
-            position: relative;
-            overflow: hidden;
+            border: 1px solid rgba(74,222,128,0.25); border-radius: 16px;
+            padding: 18px 20px; margin-bottom: 20px; position: relative; overflow: hidden;
         }
-
         .bonus-banner::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(74, 222, 128, 0.5), transparent);
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(74,222,128,0.5), transparent);
         }
-
-        .bonus-title {
-            font-size: 20px;
-            font-weight: 700;
-            color: #4ade80;
-            letter-spacing: 0.5px;
-            margin-bottom: 6px;
-        }
-
-        .bonus-desc {
-            font-size: 13px;
-            color: rgba(255,255,255,0.6);
-            line-height: 1.5;
-        }
-
-        .bonus-desc strong {
-            color: rgba(255,255,255,0.9);
-        }
-
+        .bonus-title { font-size: 20px; font-weight: 700; color: #4ade80; margin-bottom: 6px; }
+        .bonus-desc { font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.5; }
+        .bonus-desc strong { color: rgba(255,255,255,0.9); }
         .bonus-badge {
-            display: inline-block;
-            background: linear-gradient(135deg, #4ade80, #22c55e);
-            color: #000;
-            font-size: 11px;
-            font-weight: 700;
-            padding: 3px 10px;
-            border-radius: 20px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 10px;
+            display: inline-block; background: linear-gradient(135deg, #4ade80, #22c55e);
+            color: #000; font-size: 11px; font-weight: 700;
+            padding: 3px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; margin-top: 10px;
         }
 
-        .deposit-methods {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+        /* TON Connect deposit section */
+        .ton-deposit-section {
+            background: rgba(0,136,204,0.08); border: 1px solid rgba(0,136,204,0.2);
+            border-radius: 16px; padding: 20px; margin-bottom: 20px;
         }
+        .ton-deposit-title { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .ton-deposit-title .dot { width: 8px; height: 8px; background: #0088cc; border-radius: 50%; }
+        .ton-amount-input-row { display: flex; gap: 10px; margin-bottom: 12px; }
+        .ton-amount-input {
+            flex: 1; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px; padding: 12px 16px; font-size: 16px; color: #fff;
+            outline: none; transition: border-color 0.2s;
+        }
+        .ton-amount-input:focus { border-color: #0088cc; }
+        .ton-amount-input::placeholder { color: rgba(255,255,255,0.25); }
+        .ton-send-btn {
+            padding: 12px 20px; background: linear-gradient(135deg, #0088cc, #0066aa);
+            border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600;
+            cursor: pointer; transition: opacity 0.2s; white-space: nowrap;
+        }
+        .ton-send-btn:hover { opacity: 0.9; }
+        .ton-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .ton-rate-info { font-size: 12px; color: rgba(255,255,255,0.4); margin-bottom: 8px; }
+        .ton-rate-info span { color: #0088cc; font-weight: 600; }
+        .ton-not-connected {
+            text-align: center; padding: 16px;
+            font-size: 13px; color: rgba(255,255,255,0.5);
+        }
+        .deposit-status {
+            padding: 10px 14px; border-radius: 10px; font-size: 13px;
+            margin-top: 10px; display: none;
+        }
+        .deposit-status.waiting { background: rgba(255,215,0,0.1); color: #ffd700; border: 1px solid rgba(255,215,0,0.2); display: block; }
+        .deposit-status.success { background: rgba(74,222,128,0.1); color: #4ade80; border: 1px solid rgba(74,222,128,0.2); display: block; }
+        .deposit-status.error { background: rgba(255,80,80,0.1); color: #ff5050; border: 1px solid rgba(255,80,80,0.2); display: block; }
 
+        /* Manual deposit section */
+        .manual-divider {
+            display: flex; align-items: center; gap: 12px; margin: 16px 0;
+            font-size: 11px; color: rgba(255,255,255,0.25); text-transform: uppercase; letter-spacing: 1px;
+        }
+        .manual-divider::before, .manual-divider::after {
+            content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.08);
+        }
+        .deposit-methods { display: flex; flex-direction: column; gap: 16px; }
         .deposit-method {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 16px;
-            padding: 20px;
-            transition: all 0.2s ease;
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px; padding: 20px; transition: all 0.2s ease;
         }
-
-        .deposit-method:hover {
-            background: rgba(255,255,255,0.06);
-            border-color: rgba(255,255,255,0.12);
-        }
-
-        .deposit-method-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-
+        .deposit-method:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.12); }
+        .deposit-method-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
         .method-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 14px;
-            flex-shrink: 0;
+            width: 44px; height: 44px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 14px; flex-shrink: 0;
         }
-
-        .method-icon.ton {
-            background: linear-gradient(135deg, #0088cc, #0066aa);
-            color: #fff;
-        }
-
-        .method-icon.usdt {
-            background: linear-gradient(135deg, #26a17b, #1e8a6a);
-            color: #fff;
-        }
-
-        .method-name {
-            font-size: 16px;
-            font-weight: 600;
-            color: #fff;
-        }
-
-        .method-network {
-            font-size: 12px;
-            color: rgba(255,255,255,0.4);
-        }
-
+        .method-icon.ton { background: linear-gradient(135deg, #0088cc, #0066aa); color: #fff; }
+        .method-icon.usdt { background: linear-gradient(135deg, #26a17b, #1e8a6a); color: #fff; }
+        .method-name { font-size: 16px; font-weight: 600; color: #fff; }
+        .method-network { font-size: 12px; color: rgba(255,255,255,0.4); }
         .method-min {
-            font-size: 12px;
-            color: rgba(255,255,255,0.5);
-            margin-bottom: 10px;
-            padding: 6px 10px;
-            background: rgba(255,255,255,0.04);
-            border-radius: 8px;
-            border-left: 3px solid rgba(74, 222, 128, 0.4);
+            font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 10px;
+            padding: 6px 10px; background: rgba(255,255,255,0.04); border-radius: 8px;
+            border-left: 3px solid rgba(74,222,128,0.4);
         }
-
-        .method-min strong {
-            color: #4ade80;
-        }
-
+        .method-min strong { color: #4ade80; }
         .method-address {
-            background: rgba(0,0,0,0.4);
-            border-radius: 8px;
-            padding: 12px;
-            font-size: 12px;
-            color: rgba(255,255,255,0.7);
-            word-break: break-all;
-            font-family: 'Monaco', 'Consolas', monospace;
-            margin-bottom: 8px;
-            cursor: pointer;
-            transition: background 0.2s ease;
+            background: rgba(0,0,0,0.4); border-radius: 8px; padding: 12px;
+            font-size: 12px; color: rgba(255,255,255,0.7); word-break: break-all;
+            font-family: 'Monaco', 'Consolas', monospace; margin-bottom: 8px;
+            cursor: pointer; transition: background 0.2s ease;
         }
-
-        .method-address:hover {
-            background: rgba(0,0,0,0.6);
-        }
-
-        .copy-hint {
-            font-size: 10px;
-            color: rgba(255,255,255,0.3);
-            text-align: right;
-            margin-bottom: 12px;
-        }
-
+        .method-address:hover { background: rgba(0,0,0,0.6); }
+        .copy-hint { font-size: 10px; color: rgba(255,255,255,0.3); text-align: right; margin-bottom: 12px; }
         .qr-container {
-            display: flex;
-            justify-content: center;
-            padding: 12px;
-            background: #fff;
-            border-radius: 12px;
-            width: fit-content;
-            margin: 0 auto;
+            display: flex; justify-content: center; padding: 12px;
+            background: #fff; border-radius: 12px; width: fit-content; margin: 0 auto;
         }
-
-        .qr-container img {
-            display: block;
-            width: 140px;
-            height: 140px;
-        }
+        .qr-container img { display: block; width: 140px; height: 140px; }
 
         /* Main Area */
-        .main-area {
-            display: flex;
-            gap: 20px;
-            flex: 1;
-            min-height: 0;
-        }
-
-        /* Canvas Container */
+        .main-area { display: flex; gap: 20px; flex: 1; min-height: 0; }
         .canvas-container {
-            flex: 1;
-            background: linear-gradient(180deg, #111 0%, #0a0a0a 100%);
-            border-radius: 20px;
-            overflow: hidden;
-            position: relative;
+            flex: 1; background: linear-gradient(180deg, #111 0%, #0a0a0a 100%);
+            border-radius: 20px; overflow: hidden; position: relative;
             border: 1px solid rgba(255,255,255,0.05);
-            display: flex;
-            flex-direction: column;
-            min-height: 420px;
+            display: flex; flex-direction: column; min-height: 420px;
         }
-
-        #container {
-            flex: 1;
-            min-height: 400px;
-            width: 100%;
-            display: block;
-        }
+        #container { flex: 1; min-height: 400px; width: 100%; display: block; }
 
         /* Game Status */
         .game-status-bar {
-            position: absolute;
-            top: 20px;
-            left: 24px;
-            right: 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 10;
-            pointer-events: none;
+            position: absolute; top: 20px; left: 24px; right: 24px;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 10; pointer-events: none;
         }
-
         .status-badge {
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            background: rgba(255,255,255,0.05);
-            color: rgba(255,255,255,0.6);
-            border: 1px solid rgba(255,255,255,0.08);
-            backdrop-filter: blur(8px);
+            padding: 10px 20px; border-radius: 10px; font-size: 12px; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 1.5px;
+            background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.6);
+            border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(8px);
         }
+        .status-ready { background: rgba(255,255,255,0.08); color: #fff; border-color: rgba(255,255,255,0.15); }
+        .status-running { background: rgba(80,80,80,0.2); color: #999; border-color: rgba(150,150,150,0.2); }
+        .status-crashed { background: rgba(255,80,80,0.15); color: #ff5050; border-color: rgba(255,80,80,0.3); }
+        .status-cashed { background: rgba(74,222,128,0.15); color: #4ade80; border-color: rgba(74,222,128,0.3); }
+        .round-info { display: flex; gap: 16px; }
+        .round-item { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: rgba(255,255,255,0.03); border-radius: 8px; backdrop-filter: blur(8px); }
+        .round-label { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; }
+        .round-value { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.8); }
 
-        .status-ready {
-            background: rgba(255,255,255,0.08);
-            color: #fff;
-            border-color: rgba(255,255,255,0.15);
-        }
-
-        .status-running {
-            background: rgba(80,80,80,0.2);
-            color: #999;
-            border-color: rgba(150,150,150,0.2);
-        }
-
-        .status-crashed {
-            background: rgba(255,80,80,0.15);
-            color: #ff5050;
-            border-color: rgba(255,80,80,0.3);
-        }
-
-        .status-cashed {
-            background: rgba(74,222,128,0.15);
-            color: #4ade80;
-            border-color: rgba(74,222,128,0.3);
-        }
-
-        .round-info {
-            display: flex;
-            gap: 16px;
-        }
-
-        .round-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            background: rgba(255,255,255,0.03);
-            border-radius: 8px;
-            backdrop-filter: blur(8px);
-        }
-
-        .round-label {
-            font-size: 10px;
-            color: rgba(255,255,255,0.4);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .round-value {
-            font-size: 14px;
-            font-weight: 600;
-            color: rgba(255,255,255,0.8);
-        }
-
-        /* Past X's display */
+        /* Past X's */
         .past-xs-container {
-            position: absolute;
-            bottom: 16px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 6px;
-            z-index: 10;
-            pointer-events: none;
-            max-width: 90%;
+            position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
+            z-index: 10; pointer-events: none; max-width: 90%;
         }
-
         .past-x-item {
-            padding: 6px 12px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            color: rgba(255,255,255,0.6);
-            backdrop-filter: blur(4px);
+            padding: 6px 12px; background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08); border-radius: 8px;
+            font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.6); backdrop-filter: blur(4px);
         }
-
-        .past-x-item.zero {
-            color: #ff5050;
-            background: rgba(255,80,80,0.1);
-            border-color: rgba(255,80,80,0.2);
-        }
-
-        .past-x-item.low {
-            color: #ff9060;
-            background: rgba(255,144,96,0.1);
-            border-color: rgba(255,144,96,0.2);
-        }
-
-        .past-x-item.mid {
-            color: #ffd700;
-            background: rgba(255,215,0,0.1);
-            border-color: rgba(255,215,0,0.2);
-        }
-
-        .past-x-item.high {
-            color: #4ade80;
-            background: rgba(74,222,128,0.1);
-            border-color: rgba(74,222,128,0.2);
-        }
+        .past-x-item.zero { color: #ff5050; background: rgba(255,80,80,0.1); border-color: rgba(255,80,80,0.2); }
+        .past-x-item.low { color: #ff9060; background: rgba(255,144,96,0.1); border-color: rgba(255,144,96,0.2); }
+        .past-x-item.mid { color: #ffd700; background: rgba(255,215,0,0.1); border-color: rgba(255,215,0,0.2); }
+        .past-x-item.high { color: #4ade80; background: rgba(74,222,128,0.1); border-color: rgba(74,222,128,0.2); }
 
         /* Multiplier */
         .multiplier-overlay {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            pointer-events: none;
-            z-index: 5;
-            width: 90%;
-            max-width: 600px;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            text-align: center; pointer-events: none; z-index: 5; width: 90%; max-width: 600px;
         }
+        .multiplier-container { display: flex; align-items: baseline; justify-content: center; gap: 6px; }
+        .multiplier-value { font-size: 88px; font-weight: 200; line-height: 1; letter-spacing: -4px; transition: all 0.15s ease; display: inline-block; }
+        .multiplier-value.idle { color: rgba(255,255,255,0.15); font-size: 56px; }
+        .multiplier-value.normal { color: rgba(255,255,255,0.9); }
+        .multiplier-value.good { color: #fff; text-shadow: 0 0 60px rgba(255,255,255,0.5); }
+        .multiplier-value.warning { color: #fff; text-shadow: 0 0 80px rgba(255,255,255,0.6); }
+        .multiplier-value.danger { color: #ff4040; text-shadow: 0 0 100px rgba(255,60,60,0.8); animation: danger-pulse 0.3s ease-in-out infinite; }
+        @keyframes danger-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+        .multiplier-x { font-size: 40px; font-weight: 300; color: rgba(255,255,255,0.25); }
+        .multiplier-hint { margin-top: 24px; font-size: 12px; color: rgba(255,255,255,0.25); text-transform: uppercase; letter-spacing: 3px; }
 
-        .multiplier-container {
-            display: flex;
-            align-items: baseline;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        .multiplier-value {
-            font-size: 88px;
-            font-weight: 200;
-            line-height: 1;
-            letter-spacing: -4px;
-            transition: all 0.15s ease;
-            display: inline-block;
-        }
-
-        .multiplier-value.idle {
-            color: rgba(255,255,255,0.15);
-            font-size: 56px;
-        }
-
-        .multiplier-value.normal {
-            color: rgba(255,255,255,0.9);
-        }
-
-        .multiplier-value.good {
-            color: #fff;
-            text-shadow: 0 0 60px rgba(255,255,255,0.5);
-        }
-
-        .multiplier-value.warning {
-            color: #fff;
-            text-shadow: 0 0 80px rgba(255,255,255,0.6);
-        }
-
-        .multiplier-value.danger {
-            color: #ff4040;
-            text-shadow: 0 0 100px rgba(255,60,60,0.8);
-            animation: danger-pulse 0.3s ease-in-out infinite;
-        }
-
-        @keyframes danger-pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-        }
-
-        .multiplier-x {
-            font-size: 40px;
-            font-weight: 300;
-            color: rgba(255,255,255,0.25);
-        }
-
-        .multiplier-hint {
-            margin-top: 24px;
-            font-size: 12px;
-            color: rgba(255,255,255,0.25);
-            text-transform: uppercase;
-            letter-spacing: 3px;
-        }
-
-        /* Crash Result */
-        .crash-result {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            z-index: 20;
-            animation: crash-appear 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        @keyframes crash-appear {
-            0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
-            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-        }
-
-        .crash-text {
-            font-size: 72px;
-            font-weight: 200;
-            color: #ff4040;
-            letter-spacing: 16px;
-            text-transform: uppercase;
-        }
-
-        .crash-multiplier {
-            margin-top: 8px;
-            font-size: 32px;
-            font-weight: 300;
-            color: rgba(255,255,255,0.4);
-        }
+        /* Crash */
+        .crash-result { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; z-index: 20; animation: crash-appear 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        @keyframes crash-appear { 0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+        .crash-text { font-size: 72px; font-weight: 200; color: #ff4040; letter-spacing: 16px; text-transform: uppercase; }
+        .crash-multiplier { margin-top: 8px; font-size: 32px; font-weight: 300; color: rgba(255,255,255,0.4); }
 
         /* Control Panel */
-        .control-panel {
-            width: 380px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            flex-shrink: 0;
-        }
-
+        .control-panel { width: 380px; display: flex; flex-direction: column; gap: 12px; flex-shrink: 0; }
         .panel-card {
             background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
-            border-radius: 16px;
-            padding: 20px;
-            border: 1px solid rgba(255,255,255,0.05);
-            flex-shrink: 0;
+            border-radius: 16px; padding: 20px; border: 1px solid rgba(255,255,255,0.05); flex-shrink: 0;
         }
+        .panel-title { font-size: 10px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; font-weight: 500; }
 
-        .panel-title {
-            font-size: 10px;
-            color: rgba(255,255,255,0.35);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 16px;
-            font-weight: 500;
-        }
-
-        /* Bet Amount */
-        .bet-controls {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .bet-input-wrapper {
-            position: relative;
-        }
-
+        /* Bet */
+        .bet-controls { display: flex; flex-direction: column; gap: 12px; }
+        .bet-input-wrapper { position: relative; }
         .bet-input {
-            width: 100%;
-            background: rgba(0,0,0,0.4);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 12px;
-            padding: 16px 70px 16px 16px;
-            font-size: 22px;
-            font-weight: 500;
-            color: #fff;
-            outline: none;
-            transition: all 0.2s ease;
+            width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px; padding: 16px 70px 16px 16px;
+            font-size: 22px; font-weight: 500; color: #fff; outline: none; transition: all 0.2s ease;
         }
-
-        .bet-input:focus {
-            border-color: rgba(255,255,255,0.2);
-            background: rgba(0,0,0,0.6);
-        }
-
-        .bet-input::placeholder {
-            color: rgba(255,255,255,0.2);
-            font-weight: 400;
-        }
-
-        .bet-currency {
-            position: absolute;
-            right: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 14px;
-            color: rgba(255,255,255,0.3);
-            font-weight: 500;
-            pointer-events: none;
-        }
-
-        .quick-bet-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-        }
-
+        .bet-input:focus { border-color: rgba(255,255,255,0.2); background: rgba(0,0,0,0.6); }
+        .bet-input::placeholder { color: rgba(255,255,255,0.2); font-weight: 400; }
+        .bet-currency { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 14px; color: rgba(255,255,255,0.3); font-weight: 500; pointer-events: none; }
+        .quick-bet-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
         .quick-btn {
-            padding: 12px 8px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 10px;
-            color: rgba(255,255,255,0.7);
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
+            padding: 12px 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 10px; color: rgba(255,255,255,0.7); font-size: 13px; font-weight: 500;
+            cursor: pointer; transition: all 0.2s ease;
         }
-
-        .quick-btn:hover {
-            background: rgba(255,255,255,0.08);
-            border-color: rgba(255,255,255,0.12);
-            color: #fff;
-        }
+        .quick-btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.12); color: #fff; }
 
         /* Auto Cashout */
-        .auto-cashout-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .auto-input-wrapper {
-            flex: 1;
-            position: relative;
-        }
-
+        .auto-cashout-row { display: flex; align-items: center; gap: 12px; }
+        .auto-input-wrapper { flex: 1; position: relative; }
         .auto-input {
-            width: 100%;
-            background: rgba(0,0,0,0.4);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 10px;
-            padding: 14px 45px 14px 14px;
-            font-size: 16px;
-            font-weight: 500;
-            color: #fff;
-            outline: none;
-            transition: all 0.2s ease;
+            width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px; padding: 14px 45px 14px 14px; font-size: 16px; font-weight: 500;
+            color: #fff; outline: none; transition: all 0.2s ease;
         }
-
-        .auto-input:focus {
-            border-color: rgba(255,255,255,0.2);
-        }
-
-        .auto-input::placeholder {
-            color: rgba(255,255,255,0.2);
-        }
-
-        .auto-x {
-            position: absolute;
-            right: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 14px;
-            color: rgba(255,255,255,0.3);
-            pointer-events: none;
-        }
-
-        .auto-toggle {
-            width: 52px;
-            height: 30px;
-            background: rgba(255,255,255,0.08);
-            border-radius: 15px;
-            position: relative;
-            cursor: pointer;
-            transition: all 0.25s ease;
-            flex-shrink: 0;
-        }
-
-        .auto-toggle.active {
-            background: rgba(255,255,255,0.2);
-        }
-
-        .auto-toggle::after {
-            content: '';
-            position: absolute;
-            width: 22px;
-            height: 22px;
-            background: #666;
-            border-radius: 50%;
-            top: 4px;
-            left: 4px;
-            transition: all 0.25s ease;
-        }
-
-        .auto-toggle.active::after {
-            left: 26px;
-            background: #fff;
-        }
+        .auto-input:focus { border-color: rgba(255,255,255,0.2); }
+        .auto-input::placeholder { color: rgba(255,255,255,0.2); }
+        .auto-x { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 14px; color: rgba(255,255,255,0.3); pointer-events: none; }
+        .auto-toggle { width: 52px; height: 30px; background: rgba(255,255,255,0.08); border-radius: 15px; position: relative; cursor: pointer; transition: all 0.25s ease; flex-shrink: 0; }
+        .auto-toggle.active { background: rgba(255,255,255,0.2); }
+        .auto-toggle::after { content: ''; position: absolute; width: 22px; height: 22px; background: #666; border-radius: 50%; top: 4px; left: 4px; transition: all 0.25s ease; }
+        .auto-toggle.active::after { left: 26px; background: #fff; }
 
         /* Main Button */
-        .main-button {
-            width: 100%;
-            padding: 20px;
-            border-radius: 14px;
-            font-size: 14px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: none;
-            flex-shrink: 0;
-        }
-
-        .btn-place-bet {
-            background: #fff;
-            color: #000;
-        }
-
-        .btn-place-bet:hover {
-            background: rgba(255,255,255,0.9);
-        }
-
-        .btn-cashout {
-            background: linear-gradient(135deg, #404040 0%, #2a2a2a 100%);
-            color: #fff;
-            border: 1px solid rgba(255,255,255,0.2);
-            animation: cashout-pulse 1.5s ease-in-out infinite;
-        }
-
-        @keyframes cashout-pulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.1); }
-            50% { box-shadow: 0 0 0 8px rgba(255,255,255,0); }
-        }
-
-        .btn-waiting {
-            background: rgba(255,255,255,0.05);
-            color: rgba(255,255,255,0.3);
-            cursor: not-allowed;
-        }
+        .main-button { width: 100%; padding: 20px; border-radius: 14px; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: all 0.2s ease; border: none; flex-shrink: 0; }
+        .btn-place-bet { background: #fff; color: #000; }
+        .btn-place-bet:hover { background: rgba(255,255,255,0.9); }
+        .btn-cashout { background: linear-gradient(135deg, #404040 0%, #2a2a2a 100%); color: #fff; border: 1px solid rgba(255,255,255,0.2); animation: cashout-pulse 1.5s ease-in-out infinite; }
+        @keyframes cashout-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.1); } 50% { box-shadow: 0 0 0 8px rgba(255,255,255,0); } }
+        .btn-waiting { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.3); cursor: not-allowed; }
 
         /* Current Bet */
-        .current-bet-card {
-            display: none;
-            background: rgba(255,255,255,0.03);
-            border-color: rgba(255,255,255,0.1);
-        }
-
-        .current-bet-card.active {
-            display: block;
-        }
-
-        .bet-info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        .bet-info-item {
-            text-align: center;
-            padding: 16px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 10px;
-        }
-
-        .bet-info-label {
-            font-size: 10px;
-            color: rgba(255,255,255,0.35);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 8px;
-        }
-
-        .bet-info-value {
-            font-size: 24px;
-            font-weight: 600;
-            color: #fff;
-        }
+        .current-bet-card { display: none; background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.1); }
+        .current-bet-card.active { display: block; }
+        .bet-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .bet-info-item { text-align: center; padding: 16px; background: rgba(0,0,0,0.3); border-radius: 10px; }
+        .bet-info-label { font-size: 10px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
+        .bet-info-value { font-size: 24px; font-weight: 600; color: #fff; }
 
         /* History */
-        .history-list {
-            max-height: 150px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .history-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 14px;
-            background: rgba(255,255,255,0.02);
-            border-radius: 8px;
-            transition: all 0.15s ease;
-        }
-
-        .history-item:hover {
-            background: rgba(255,255,255,0.04);
-        }
-
-        .history-time {
-            font-size: 11px;
-            color: rgba(255,255,255,0.3);
-        }
-
-        .history-result {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .history-multiplier {
-            font-size: 13px;
-            font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 6px;
-        }
-
-        .history-multiplier.win {
-            color: #fff;
-            background: rgba(255,255,255,0.1);
-        }
-
-        .history-multiplier.loss {
-            color: #ff5050;
-            background: rgba(255,80,80,0.1);
-        }
-
-        .history-profit {
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .history-profit.positive {
-            color: rgba(255,255,255,0.7);
-        }
-
-        .history-profit.negative {
-            color: #ff5050;
-        }
+        .history-list { max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(255,255,255,0.02); border-radius: 8px; transition: all 0.15s ease; }
+        .history-item:hover { background: rgba(255,255,255,0.04); }
+        .history-time { font-size: 11px; color: rgba(255,255,255,0.3); }
+        .history-result { display: flex; align-items: center; gap: 12px; }
+        .history-multiplier { font-size: 13px; font-weight: 600; padding: 4px 10px; border-radius: 6px; }
+        .history-multiplier.win { color: #fff; background: rgba(255,255,255,0.1); }
+        .history-multiplier.loss { color: #ff5050; background: rgba(255,80,80,0.1); }
+        .history-profit { font-size: 12px; font-weight: 500; }
+        .history-profit.positive { color: rgba(255,255,255,0.7); }
+        .history-profit.negative { color: #ff5050; }
 
         /* Stats */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-        }
-
-        .stat-card {
-            padding: 14px 8px;
-            background: rgba(255,255,255,0.02);
-            border-radius: 10px;
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 18px;
-            font-weight: 600;
-            color: rgba(255,255,255,0.8);
-        }
-
-        .stat-label {
-            font-size: 9px;
-            color: rgba(255,255,255,0.3);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 4px;
-        }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .stat-card { padding: 14px 8px; background: rgba(255,255,255,0.02); border-radius: 10px; text-align: center; }
+        .stat-value { font-size: 18px; font-weight: 600; color: rgba(255,255,255,0.8); }
+        .stat-label { font-size: 9px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
 
         /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 4px;
-        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
 
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.1);
-            border-radius: 2px;
-        }
-
-        /* Win Overlay */
-        .win-overlay {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            z-index: 20;
-            animation: win-appear 0.4s ease-out;
-        }
-
-        @keyframes win-appear {
-            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-        }
-
-        .win-amount {
-            font-size: 56px;
-            font-weight: 200;
-            color: #fff;
-            letter-spacing: -2px;
-        }
-
-        .win-label {
-            font-size: 12px;
-            color: rgba(255,255,255,0.4);
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            margin-top: 8px;
-        }
-
-        /* Toast notifications */
+        /* Toast */
         .toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translate(-50%, 100px);
-            background: rgba(20,20,20,0.95);
-            color: #fff;
-            padding: 14px 24px;
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
-            font-size: 14px;
-            z-index: 30000;
-            transition: transform 0.3s ease;
-            backdrop-filter: blur(10px);
+            position: fixed; bottom: 30px; left: 50%;
+            transform: translate(-50%, 100px); background: rgba(20,20,20,0.95);
+            color: #fff; padding: 14px 24px; border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1); font-size: 14px;
+            z-index: 30000; transition: transform 0.3s ease; backdrop-filter: blur(10px);
         }
+        .toast.show { transform: translate(-50%, 0); }
 
-        .toast.show {
-            transform: translate(-50%, 0);
-        }
+        @keyframes win-appear { 0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
     </style>
 </head>
 <body>
-    <!-- Toast -->
     <div class="toast" id="toast"></div>
-
-    <!-- Deposit Modal Overlay -->
     <div class="modal-overlay" id="modal-overlay" onclick="closeDepositModal()"></div>
+
+    <!-- Auth Screen -->
+    <div id="auth-screen">
+        <div class="logo">КРАШ</div>
+        <div class="sub">Приват Ассорти</div>
+        <div class="spinner" id="auth-spinner"></div>
+        <div class="auth-error" id="auth-error" style="display:none"></div>
+    </div>
 
     <!-- Deposit Modal -->
     <div class="modal" id="deposit-modal">
@@ -1410,15 +458,44 @@
             <div class="modal-close" onclick="closeDepositModal()">×</div>
         </div>
 
-        <!-- Bonus Banner -->
         <div class="bonus-banner">
             <div class="bonus-title">Бонус 200% к первому пополнению!</div>
             <div class="bonus-desc">
-                Пополните баланс на <strong>10 TON или более</strong> и получите бонус 200% к сумме пополнения.<br>
+                Пополните баланс на <strong>10 TON или более</strong> и получите бонус 200%.<br>
                 Минимальное пополнение без бонуса: <strong>2 TON</strong> или <strong>5 USDT</strong>
             </div>
             <span class="bonus-badge">Только для новых игроков</span>
         </div>
+
+        <!-- TON Connect deposit (auto-verified!) -->
+        <div class="ton-deposit-section">
+            <div class="ton-deposit-title">
+                <div class="dot"></div>
+                Через TON Connect (автоверификация)
+            </div>
+
+            <div id="ton-connect-deposit-area">
+                <div class="ton-not-connected" id="tc-not-connected">
+                    Подключите кошелёк TON Connect вверху страницы
+                </div>
+                <div id="tc-connected-area" style="display:none">
+                    <div class="ton-rate-info">
+                        Курс: <span id="deposit-rate">115</span> RUB/TON &nbsp;·&nbsp;
+                        Вы получите: <span id="deposit-rub-preview">—</span> RUB
+                    </div>
+                    <div class="ton-amount-input-row">
+                        <input type="number" class="ton-amount-input" id="deposit-ton-amount"
+                            placeholder="Сумма в TON" min="0.1" step="0.1" oninput="updateDepositPreview()">
+                        <button class="ton-send-btn" onclick="sendTonDeposit()" id="ton-send-btn">
+                            Отправить TON
+                        </button>
+                    </div>
+                    <div class="deposit-status" id="deposit-status"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="manual-divider">или вручную</div>
 
         <div class="deposit-methods">
             <div class="deposit-method">
@@ -1429,7 +506,7 @@
                         <div class="method-network">The Open Network</div>
                     </div>
                 </div>
-                <div class="method-min">Мин. без бонуса: <strong>2 TON</strong> &nbsp;|&nbsp; Мин. с бонусом 200%: <strong>10 TON</strong></div>
+                <div class="method-min">Мин. без бонуса: <strong>2 TON</strong> &nbsp;|&nbsp; С бонусом 200%: <strong>10 TON</strong></div>
                 <div class="method-address" onclick="copyAddress('ton')">
                     UQAVxMR3ycUvfkmAC8x5elwY9X-jX77sOp2wEVobK1uhvdR4
                 </div>
@@ -1454,44 +531,7 @@
         </div>
     </div>
 
-    <!-- Rate Panel -->
-    <div class="rate-panel" id="rate-panel">
-        <div class="rate-panel-header">
-            <div class="rate-panel-title">Курс TON / RUB</div>
-            <div class="rate-panel-close" onclick="closeRatePanel()">×</div>
-        </div>
-        <div class="rate-info">
-            <div class="rate-main">
-                <div class="rate-icon">TON</div>
-                <div>
-                    <div class="rate-value" id="rate-value">115.00 <span class="rate-currency">RUB</span></div>
-                </div>
-            </div>
-            <div class="rate-change">
-                <div class="rate-change-value" id="rate-change-value">—</div>
-                <div class="rate-change-label" id="rate-change-label">24h</div>
-            </div>
-        </div>
-        <div class="chart-container">
-            <div class="chart-title">График TON / RUB</div>
-            <div class="chart-wrapper">
-                <div class="chart-loading" id="chart-loading">Загрузка графика...</div>
-                <iframe
-                    class="chart-iframe"
-                    id="chart-iframe"
-                    src=""
-                    sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-                    loading="lazy"
-                    onload="document.getElementById('chart-loading').classList.add('hidden')"
-                ></iframe>
-            </div>
-            <a class="chart-fallback-btn" href="https://www.coingecko.com/ru/coins/toncoin" target="_blank" rel="noopener">
-                Открыть полный график на CoinGecko
-            </a>
-        </div>
-    </div>
-
-    <div class="game-container">
+    <div class="game-container" id="game-container" style="display:none">
         <header class="header">
             <div class="logo-section">
                 <div class="logo-icon">
@@ -1502,25 +542,27 @@
                     <div class="logo-subtitle">Приват Ассорти</div>
                 </div>
             </div>
-
             <div class="header-right">
-                <div class="balance-section">
-                    <div class="balance-card" onclick="toggleBalance()">
-                        <div class="balance-icon">$</div>
-                        <div class="balance-info">
-                            <span class="balance-label">Баланс</span>
-                            <span class="balance-amount" id="balance-display">500.00 <span>RUB</span></span>
-                        </div>
+                <!-- TON Connect Button -->
+                <button class="ton-connect-btn" id="ton-connect-btn" onclick="handleTonConnect()">
+                    <span>💎</span>
+                    <span id="ton-btn-text">Подключить кошелёк</span>
+                </button>
+
+                <div class="balance-card">
+                    <div class="balance-icon">₽</div>
+                    <div class="balance-info">
+                        <span class="balance-label">Баланс</span>
+                        <span class="balance-amount" id="balance-display">0.00 <span>RUB</span></span>
                     </div>
-                    <div class="deposit-btn" onclick="openDepositModal()">+</div>
                 </div>
+                <div class="deposit-btn" onclick="openDepositModal()">+</div>
             </div>
         </header>
 
         <div class="main-area">
             <div class="canvas-container">
                 <div id="container"></div>
-
                 <div class="game-status-bar">
                     <div class="status-badge" id="status-badge">Ожидание</div>
                     <div class="round-info">
@@ -1534,7 +576,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="multiplier-overlay" id="multiplier-overlay">
                     <div class="multiplier-container">
                         <span class="multiplier-value idle" id="multiplier">1.00</span>
@@ -1542,8 +583,6 @@
                     </div>
                     <div class="multiplier-hint" id="multiplier-hint">Сделайте ставку</div>
                 </div>
-
-                <!-- Past X's display -->
                 <div class="past-xs-container" id="past-xs-container"></div>
             </div>
 
@@ -1594,31 +633,17 @@
                 <div class="panel-card">
                     <div class="panel-title">Статистика</div>
                     <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-value" id="stat-games">0</div>
-                            <div class="stat-label">Игр</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="stat-wins">0</div>
-                            <div class="stat-label">Побед</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="stat-total-bet">0</div>
-                            <div class="stat-label">Ставок</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="stat-total-win">0</div>
-                            <div class="stat-label">Выиграно</div>
-                        </div>
+                        <div class="stat-card"><div class="stat-value" id="stat-games">0</div><div class="stat-label">Игр</div></div>
+                        <div class="stat-card"><div class="stat-value" id="stat-wins">0</div><div class="stat-label">Побед</div></div>
+                        <div class="stat-card"><div class="stat-value" id="stat-total-bet">0</div><div class="stat-label">Ставок</div></div>
+                        <div class="stat-card"><div class="stat-value" id="stat-total-win">0</div><div class="stat-label">Выиграно</div></div>
                     </div>
                 </div>
 
                 <div class="panel-card">
                     <div class="panel-title">ПРОШЛЫЕ ИКСы</div>
                     <div class="history-list" id="history-list">
-                        <div style="text-align: center; padding: 20px; color: rgba(255,255,255,0.2); font-size: 12px;">
-                            История пуста
-                        </div>
+                        <div style="text-align:center;padding:20px;color:rgba(255,255,255,0.2);font-size:12px;">История пуста</div>
                     </div>
                 </div>
             </div>
@@ -1626,1102 +651,932 @@
     </div>
 
     <script>
-        // ==================== TOAST ====================
-        var toastTimer = null;
-        function showToast(message) {
-            var toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.classList.add('show');
-            if (toastTimer) clearTimeout(toastTimer);
-            toastTimer = setTimeout(function() {
-                toast.classList.remove('show');
-            }, 2500);
+    // ==================== CONFIG ====================
+    const BACKEND_URL = 'bbback-production.up.railway.app'; // ← ЗАМЕНИТЕ после деплоя
+    const WALLET_ADDRESS = 'UQAVxMR3ycUvfkmAC8x5elwY9X-jX77sOp2wEVobK1uhvdR4';
+
+    // ==================== TOAST ====================
+    var toastTimer = null;
+    function showToast(msg) {
+        var t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    // ==================== QR CODES ====================
+    function generateQRCode(containerId, text) {
+        var c = document.getElementById(containerId);
+        if (!c) return;
+        var img = document.createElement('img');
+        img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=' + encodeURIComponent(text);
+        img.alt = 'QR';
+        c.innerHTML = '';
+        c.appendChild(img);
+    }
+    generateQRCode('ton-qr', 'UQAVxMR3ycUvfkmAC8x5elwY9X-jX77sOp2wEVobK1uhvdR4');
+    generateQRCode('usdt-qr', 'TUFQYPZQ4aLUTxJ295AEAr4dLoV4nX9YrL');
+
+    function copyAddress(type) {
+        var addr = type === 'ton'
+            ? 'UQAVxMR3ycUvfkmAC8x5elwY9X-jX77sOp2wEVobK1uhvdR4'
+            : 'TUFQYPZQ4aLUTxJ295AEAr4dLoV4nX9YrL';
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(addr).then(() => showToast('Адрес скопирован!'));
+        } else {
+            var ta = document.createElement('textarea');
+            ta.value = addr; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select();
+            try { document.execCommand('copy'); } catch(e) {}
+            document.body.removeChild(ta); showToast('Адрес скопирован!');
+        }
+    }
+
+    // ==================== TELEGRAM WEBAPP AUTH ====================
+    var tgInitData = '';
+    var currentUser = null;
+    var balance = 0;
+
+    function getTelegramInitData() {
+        if (window.Telegram && window.Telegram.WebApp) {
+            return window.Telegram.WebApp.initData || '';
+        }
+        return '';
+    }
+
+    async function initAuth() {
+        var tg = window.Telegram && window.Telegram.WebApp;
+
+        // Expand the mini app
+        if (tg) {
+            tg.expand();
+            tg.ready();
         }
 
-        // ==================== QR CODE GENERATOR ====================
-        function generateQRCode(containerId, text) {
-            var container = document.getElementById(containerId);
-            if (!container) return;
-            var qrSize = 140;
-            var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=' + qrSize + 'x' + qrSize + '&data=' + encodeURIComponent(text);
-            var img = document.createElement('img');
-            img.src = qrUrl;
-            img.alt = 'QR Code';
-            container.innerHTML = '';
-            container.appendChild(img);
-        }
+        tgInitData = getTelegramInitData();
 
-        // Generate QR codes immediately
-        generateQRCode('ton-qr', 'UQAVxMR3ycUvfkmAC8x5elwY9X-jX77sOp2wEVobK1uhvdR4');
-        generateQRCode('usdt-qr', 'TUFQYPZQ4aLUTxJ295AEAr4dLoV4nX9YrL');
+        // Dev mode: if not in Telegram, show error
+        if (!tgInitData) {
+            document.getElementById('auth-spinner').style.display = 'none';
+            document.getElementById('auth-error').style.display = 'block';
+            document.getElementById('auth-error').textContent =
+                'Откройте игру через Telegram бота. Прямой доступ не поддерживается.';
 
-        // ==================== COPY ADDRESS ====================
-        function copyAddress(type) {
-            var address = type === 'ton'
-                ? 'UQAVxMR3ycUvfkmAC8x5elwY9X-jX77sOp2wEVobK1uhvdR4'
-                : 'TUFQYPZQ4aLUTxJ295AEAr4dLoV4nX9YrL';
-
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(address).then(function() {
-                    showToast('Адрес скопирован!');
-                }).catch(function() { fallbackCopy(address); });
-            } else {
-                fallbackCopy(address);
+            // For testing on desktop (dev only) — remove in production
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                tgInitData = 'dev_mode';
+                currentUser = { id: 1, first_name: 'Dev', username: 'dev' };
+                balance = 500;
+                showGame();
             }
+            return;
         }
 
-        function fallbackCopy(text) {
-            var textArea = document.createElement('textarea');
-            textArea.value = text;
-            textArea.style.position = 'fixed';
-            textArea.style.opacity = '0';
-            document.body.appendChild(textArea);
-            textArea.select();
-            try { document.execCommand('copy'); } catch (e) {}
-            document.body.removeChild(textArea);
-            showToast('Адрес скопирован!');
-        }
-
-        // ==================== DEPOSIT MODAL ====================
-        function openDepositModal() {
-            document.getElementById('modal-overlay').classList.add('active');
-            document.getElementById('deposit-modal').classList.add('active');
-        }
-
-        function closeDepositModal() {
-            document.getElementById('modal-overlay').classList.remove('active');
-            document.getElementById('deposit-modal').classList.remove('active');
-        }
-
-        // ==================== RATE PANEL ====================
-        function openRatePanel() {
-            document.getElementById('rate-panel').classList.add('active');
-            loadChart();
-        }
-
-        function closeRatePanel() {
-            document.getElementById('rate-panel').classList.remove('active');
-        }
-
-        function loadChart() {
-            var iframe = document.getElementById('chart-iframe');
-            if (!iframe.src || iframe.src === window.location.href) {
-                document.getElementById('chart-loading').classList.remove('hidden');
-                iframe.src = 'https://www.coingecko.com/ru/coins/toncoin';
-            }
-        }
-
-        // ==================== BALANCE ====================
-        var TON_RATE = 115;
-        var showInTON = false;
-        var balance = 500;
-
-        function toggleBalance() {
-            showInTON = !showInTON;
-            updateBalanceDisplay();
-            openRatePanel();
-        }
-
-        function updateBalanceDisplay() {
-            var balanceEl = document.getElementById('balance-display');
-            if (showInTON) {
-                var tonBalance = (balance / TON_RATE).toFixed(4);
-                balanceEl.innerHTML = tonBalance + ' <span>TON</span>';
-            } else {
-                balanceEl.innerHTML = formatMoney(balance) + ' <span>RUB</span>';
-            }
-        }
-
-        function formatMoney(num) {
-            var n = Number(num) || 0;
-            return n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        }
-
-        // ==================== PAST X's (crash history display) ====================
-        var pastXs = [];
-        var MAX_PAST_XS = 10;
-
-        function generateCrashPoint() {
-            var r = Math.random();
-            // ~2% chance of instant crash (0.00x)
-            if (r < 0.02) return 0.00;
-
-            // ~1% chance of 1.00x
-            if (r < 0.03) return 1.00;
-
-            var crash = 0.95 / (1 - r);
-            return Math.max(1.00, Math.floor(crash * 100) / 100);
-        }
-
-        function addPastX(crashPoint) {
-            pastXs.unshift(crashPoint);
-            if (pastXs.length > MAX_PAST_XS) {
-                pastXs.pop();
-            }
-            renderPastXs();
-        }
-
-        function renderPastXs() {
-            var container = document.getElementById('past-xs-container');
-            var html = '';
-
-            for (var i = 0; i < pastXs.length; i++) {
-                var cp = pastXs[i];
-                var cls = 'past-x-item';
-
-                if (cp === 0.00) {
-                    cls += ' zero';
-                } else if (cp < 1.5) {
-                    cls += ' low';
-                } else if (cp < 3) {
-                    cls += ' mid';
-                } else {
-                    cls += ' high';
-                }
-
-                html += '<div class="' + cls + '">' + cp.toFixed(2) + 'x</div>';
-            }
-
-            container.innerHTML = html;
-        }
-
-        // ==================== GAME STATE ====================
-        var gameState = {
-            currentBet: 0,
-            multiplier: 1.00,
-            crashPoint: 1.00,
-            isRunning: false,
-            hasBet: false,
-            cashedOut: false,
-            autoCashoutEnabled: false,
-            autoCashoutValue: 2.00,
-            roundNumber: 0,
-            stats: {
-                games: 0,
-                wins: 0,
-                totalBet: 0,
-                totalWin: 0
-            },
-            history: []
-        };
-
-        var gameInterval = null;
-        var gameStartTime = null;
-
-        // ==================== DOM ELEMENTS ====================
-        var multiplierEl = document.getElementById('multiplier');
-        var multiplierHint = document.getElementById('multiplier-hint');
-        var multiplierOverlay = document.getElementById('multiplier-overlay');
-        var statusBadge = document.getElementById('status-badge');
-        var roundNumberEl = document.getElementById('round-number');
-        var betAmountInput = document.getElementById('bet-amount');
-        var autoCashoutInput = document.getElementById('auto-cashout');
-        var autoToggle = document.getElementById('auto-toggle');
-        var mainButton = document.getElementById('main-button');
-        var currentBetCard = document.getElementById('current-bet-card');
-        var currentBetDisplay = document.getElementById('current-bet-display');
-        var potentialWin = document.getElementById('potential-win');
-        var historyList = document.getElementById('history-list');
-
-        // ==================== GAME FUNCTIONS ====================
-        function setBet(amount) { betAmountInput.value = amount; }
-        function multiplyBet(mult) {
-            var current = parseFloat(betAmountInput.value) || 0;
-            betAmountInput.value = Math.max(1, Math.floor(current * mult));
-        }
-
-        function toggleAutoCashout() {
-            gameState.autoCashoutEnabled = !gameState.autoCashoutEnabled;
-            autoToggle.classList.toggle('active', gameState.autoCashoutEnabled);
-            if (gameState.autoCashoutEnabled) {
-                var val = parseFloat(autoCashoutInput.value);
-                if (val > 1) gameState.autoCashoutValue = val;
-            }
-        }
-
-        autoToggle.addEventListener('click', toggleAutoCashout);
-        autoCashoutInput.addEventListener('change', function() {
-            var val = parseFloat(autoCashoutInput.value);
-            if (val > 1) gameState.autoCashoutValue = val;
-        });
-
-        function handleMainButton() {
-            if (gameState.isRunning && gameState.hasBet && !gameState.cashedOut) {
-                cashout();
-            } else if (!gameState.isRunning && !gameState.hasBet) {
-                placeBet();
-            }
-        }
-
-        mainButton.addEventListener('click', handleMainButton);
-
-        function placeBet() {
-            var betAmount = parseFloat(betAmountInput.value);
-            if (!betAmount || betAmount <= 0) { showToast('Введите сумму ставки'); return; }
-            if (betAmount > balance) { showToast('Недостаточно средств'); return; }
-
-            balance -= betAmount;
-            gameState.currentBet = betAmount;
-            gameState.hasBet = true;
-            gameState.cashedOut = false;
-            gameState.stats.totalBet += betAmount;
-            gameState.roundNumber++;
-
-            updateBalanceDisplay();
-            roundNumberEl.textContent = gameState.roundNumber;
-
-            currentBetCard.classList.add('active');
-            currentBetDisplay.textContent = formatMoney(gameState.currentBet);
-            potentialWin.textContent = formatMoney(gameState.currentBet);
-
-            mainButton.textContent = 'Ожидайте...';
-            mainButton.className = 'main-button btn-waiting';
-            mainButton.disabled = true;
-
-            statusBadge.textContent = 'Готов';
-            statusBadge.className = 'status-badge status-ready';
-            multiplierHint.textContent = 'Раунд начинается...';
-
-            setTimeout(startGame, 800);
-        }
-
-        function startGame() {
-            // Generate crash point (player doesn't see it beforehand)
-            gameState.crashPoint = generateCrashPoint();
-
-            gameState.multiplier = 1.00;
-            gameState.isRunning = true;
-            gameState.stats.games++;
-
-            if (window.robotEnter) window.robotEnter();
-
-            statusBadge.textContent = 'В игре';
-            statusBadge.className = 'status-badge status-running';
-            multiplierEl.className = 'multiplier-value normal';
-            multiplierHint.textContent = '';
-
-            if (gameState.hasBet && !gameState.cashedOut) {
-                mainButton.textContent = 'Забрать ' + formatMoney(gameState.currentBet);
-                mainButton.className = 'main-button btn-cashout';
-                mainButton.disabled = false;
-            }
-
-            gameStartTime = Date.now();
-
-            gameInterval = setInterval(function() {
-                var elapsed = (Date.now() - gameStartTime) / 1000;
-                var growthRate = 0.08;
-                gameState.multiplier = Math.pow(Math.E, growthRate * elapsed);
-                gameState.multiplier = Math.floor(gameState.multiplier * 100) / 100;
-
-                multiplierEl.textContent = gameState.multiplier.toFixed(2);
-
-                // Update robot moon passage
-                if (window.updateMoon) window.updateMoon(gameState.multiplier);
-
-                // Update potential win only if still has active bet
-                if (gameState.hasBet && !gameState.cashedOut) {
-                    var potential = gameState.currentBet * gameState.multiplier;
-                    potentialWin.textContent = formatMoney(potential);
-                    mainButton.textContent = 'Забрать ' + formatMoney(potential);
-                }
-
-                if (gameState.multiplier < 1.5) {
-                    multiplierEl.className = 'multiplier-value normal';
-                } else if (gameState.multiplier < 2) {
-                    multiplierEl.className = 'multiplier-value good';
-                } else if (gameState.multiplier < 3) {
-                    multiplierEl.className = 'multiplier-value warning';
-                } else {
-                    multiplierEl.className = 'multiplier-value danger';
-                }
-
-                if (gameState.hasBet && !gameState.cashedOut &&
-                    gameState.autoCashoutEnabled &&
-                    gameState.multiplier >= gameState.autoCashoutValue) {
-                    cashout();
-                    return;
-                }
-
-                if (gameState.multiplier >= gameState.crashPoint) {
-                    crash();
-                }
-            }, 50);
-        }
-
-        function cashout() {
-            if (!gameState.isRunning || !gameState.hasBet || gameState.cashedOut) return;
-
-            // Mark as cashed out but keep rocket flying
-            gameState.cashedOut = true;
-            var winAmount = gameState.currentBet * gameState.multiplier;
-            balance += winAmount;
-            gameState.stats.wins++;
-            gameState.stats.totalWin += winAmount;
-
-            addHistory(gameState.multiplier, true, gameState.currentBet, winAmount);
-
-            updateBalanceDisplay();
-            updateStats();
-
-            currentBetCard.classList.remove('active');
-
-            // Show win overlay but keep multiplier running
-            statusBadge.textContent = 'Выигрыш ' + formatMoney(winAmount);
-            statusBadge.className = 'status-badge status-cashed';
-
-            // Show win amount briefly in overlay (as floating text, not replacing multiplier)
-            var winBanner = document.createElement('div');
-            winBanner.style.cssText = 'position:absolute;top:30%;left:50%;transform:translateX(-50%);background:rgba(74,222,128,0.15);border:1px solid rgba(74,222,128,0.3);border-radius:12px;padding:10px 24px;font-size:22px;font-weight:600;color:#4ade80;z-index:25;pointer-events:none;animation:win-appear 0.4s ease-out;white-space:nowrap;';
-            winBanner.textContent = '+' + formatMoney(winAmount) + ' RUB';
-            document.querySelector('.canvas-container').appendChild(winBanner);
-            setTimeout(function() {
-                if (winBanner.parentNode) winBanner.parentNode.removeChild(winBanner);
-            }, 2200);
-
-            mainButton.textContent = 'Ставка сделана';
-            mainButton.className = 'main-button btn-waiting';
-            mainButton.disabled = true;
-
-            gameState.hasBet = false;
-            gameState.currentBet = 0;
-        }
-
-        function crash() {
-            clearInterval(gameInterval);
-            gameInterval = null;
-            gameState.isRunning = false;
-
-            // Add to past X's display
-            addPastX(gameState.crashPoint);
-
-            statusBadge.textContent = 'КРАШ';
-            statusBadge.className = 'status-badge status-crashed';
-
-            // If player had an active uncashed bet, record loss
-            if (gameState.hasBet && !gameState.cashedOut) {
-                addHistory(gameState.crashPoint, false, gameState.currentBet, 0);
-            }
-
-            if (window.robotExit) window.robotExit();
-
-            gameState.hasBet = false;
-            gameState.currentBet = 0;
-            gameState.cashedOut = false;
-
-            currentBetCard.classList.remove('active');
-            updateStats();
-
-            multiplierOverlay.innerHTML = '<div class="crash-result"><div class="crash-text">КРАШ</div><div class="crash-multiplier">' + gameState.crashPoint.toFixed(2) + 'x</div></div>';
-
-            mainButton.textContent = 'Сделать ставку';
-            mainButton.className = 'main-button btn-place-bet';
-            mainButton.disabled = false;
-
-            setTimeout(function() {
-                statusBadge.textContent = 'Ожидание';
-                statusBadge.className = 'status-badge';
-                resetMultiplierDisplay();
-                if (window.hideMoon) window.hideMoon();
-            }, 2500);
-        }
-
-        function resetMultiplierDisplay() {
-            multiplierOverlay.innerHTML = '<div class="multiplier-container"><span class="multiplier-value idle" id="multiplier">1.00</span><span class="multiplier-x">x</span></div><div class="multiplier-hint" id="multiplier-hint">Сделайте ставку</div>';
-            multiplierEl = document.getElementById('multiplier');
-            multiplierHint = document.getElementById('multiplier-hint');
-        }
-
-        function updateStats() {
-            document.getElementById('stat-games').textContent = gameState.stats.games;
-            document.getElementById('stat-wins').textContent = gameState.stats.wins;
-            document.getElementById('stat-total-bet').textContent = formatMoney(gameState.stats.totalBet);
-            document.getElementById('stat-total-win').textContent = formatMoney(gameState.stats.totalWin);
-        }
-
-        function addHistory(crashPoint, won, betAmount, winAmount) {
-            gameState.history.unshift({
-                crashPoint: crashPoint,
-                won: won,
-                betAmount: betAmount,
-                winAmount: winAmount,
-                profit: won ? winAmount - betAmount : -betAmount,
-                time: new Date()
+        try {
+            const res = await fetch(BACKEND_URL + '/api/me', {
+                headers: { 'x-telegram-init-data': tgInitData }
             });
-            if (gameState.history.length > 20) gameState.history.pop();
-            renderHistory();
-        }
 
-        function renderHistory() {
-            if (gameState.history.length === 0) {
-                historyList.innerHTML = '<div style="text-align: center; padding: 20px; color: rgba(255,255,255,0.2); font-size: 12px;">История пуста</div>';
+            if (!res.ok) throw new Error('Auth failed');
+            const data = await res.json();
+            currentUser = data;
+            balance = data.balance_rub;
+
+            showGame();
+            loadStats();
+        } catch(e) {
+            document.getElementById('auth-spinner').style.display = 'none';
+            document.getElementById('auth-error').style.display = 'block';
+            document.getElementById('auth-error').textContent =
+                'Ошибка подключения к серверу. Попробуйте позже.';
+        }
+    }
+
+    function showGame() {
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('game-container').style.display = 'flex';
+        updateBalanceDisplay();
+        setTimeout(initThreeScene, 100);
+        fetchTonRate();
+    }
+
+    // ==================== TON CONNECT ====================
+    var tonConnectUI = null;
+    var connectedWallet = null;
+    var tonRate = 115;
+    var depositId = null;
+    var depositPollTimer = null;
+
+    function initTonConnect() {
+        try {
+            tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+                manifestUrl: 'https://assort-five.vercel.app/tonconnect-manifest.json',
+                buttonRootId: null // we manage our own button
+            });
+
+            tonConnectUI.onStatusChange(wallet => {
+                connectedWallet = wallet;
+                updateTonConnectUI();
+            });
+        } catch(e) {
+            console.error('TON Connect init error:', e);
+        }
+    }
+
+    function updateTonConnectUI() {
+        var btn = document.getElementById('ton-connect-btn');
+        var btnText = document.getElementById('ton-btn-text');
+        var notConnected = document.getElementById('tc-not-connected');
+        var connectedArea = document.getElementById('tc-connected-area');
+
+        if (connectedWallet) {
+            var addr = connectedWallet.account.address;
+            var short = addr.slice(0, 4) + '...' + addr.slice(-4);
+            btn.className = 'ton-connect-btn connected';
+            btnText.innerHTML = '✅ ' + short;
+
+            notConnected.style.display = 'none';
+            connectedArea.style.display = 'block';
+        } else {
+            btn.className = 'ton-connect-btn';
+            btnText.innerHTML = 'Подключить кошелёк';
+
+            notConnected.style.display = 'block';
+            connectedArea.style.display = 'none';
+        }
+    }
+
+    async function handleTonConnect() {
+        if (!tonConnectUI) return;
+        if (connectedWallet) {
+            await tonConnectUI.disconnect();
+        } else {
+            await tonConnectUI.openModal();
+        }
+    }
+
+    async function fetchTonRate() {
+        try {
+            const res = await fetch(BACKEND_URL + '/api/ton-rate');
+            const data = await res.json();
+            if (data.rate) {
+                tonRate = data.rate;
+                document.getElementById('deposit-rate').textContent = Math.round(tonRate);
+            }
+        } catch(e) {}
+    }
+
+    function updateDepositPreview() {
+        var amt = parseFloat(document.getElementById('deposit-ton-amount').value) || 0;
+        var rub = Math.round(amt * tonRate);
+        document.getElementById('deposit-rub-preview').textContent = rub > 0 ? rub.toLocaleString('ru') + ' RUB' : '—';
+    }
+
+    async function sendTonDeposit() {
+        if (!connectedWallet) { showToast('Подключите кошелёк'); return; }
+
+        var amtStr = document.getElementById('deposit-ton-amount').value;
+        var amt = parseFloat(amtStr);
+        if (!amt || amt < 0.1) { showToast('Минимум 0.1 TON'); return; }
+
+        var btn = document.getElementById('ton-send-btn');
+        btn.disabled = true;
+        btn.textContent = 'Отправка...';
+
+        var statusEl = document.getElementById('deposit-status');
+        statusEl.className = 'deposit-status waiting';
+        statusEl.textContent = '⏳ Инициализация...';
+
+        try {
+            // Register deposit on backend
+            const initRes = await fetch(BACKEND_URL + '/api/deposit/init', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-telegram-init-data': tgInitData
+                },
+                body: JSON.stringify({
+                    amount_ton: amt,
+                    wallet_address: connectedWallet.account.address
+                })
+            });
+
+            if (!initRes.ok) {
+                var err = await initRes.json();
+                throw new Error(err.error || 'Server error');
+            }
+
+            var initData = await initRes.json();
+            depositId = initData.deposit_id;
+
+            // Send TON transaction via TON Connect
+            statusEl.textContent = '📱 Подтвердите транзакцию в кошельке...';
+
+            // Convert TON to nanotons
+            var nanoTons = Math.round(amt * 1e9).toString();
+
+            await tonConnectUI.sendTransaction({
+                validUntil: Math.floor(Date.now() / 1000) + 360,
+                messages: [
+                    {
+                        address: WALLET_ADDRESS,
+                        amount: nanoTons,
+                        payload: '' // empty payload
+                    }
+                ]
+            });
+
+            statusEl.textContent = '🔍 Транзакция отправлена, ожидаем подтверждения блокчейна...';
+
+            // Start polling for confirmation
+            startDepositPolling(depositId);
+
+        } catch(e) {
+            if (e.message === 'Reject request') {
+                statusEl.className = 'deposit-status error';
+                statusEl.textContent = '❌ Транзакция отменена';
+            } else {
+                statusEl.className = 'deposit-status error';
+                statusEl.textContent = '❌ Ошибка: ' + e.message;
+            }
+            btn.disabled = false;
+            btn.textContent = 'Отправить TON';
+        }
+    }
+
+    function startDepositPolling(depId) {
+        var attempts = 0;
+        var maxAttempts = 40; // ~10 minutes
+
+        if (depositPollTimer) clearInterval(depositPollTimer);
+
+        depositPollTimer = setInterval(async () => {
+            attempts++;
+            if (attempts > maxAttempts) {
+                clearInterval(depositPollTimer);
+                document.getElementById('deposit-status').className = 'deposit-status error';
+                document.getElementById('deposit-status').textContent =
+                    '⏰ Время ожидания истекло. Если вы отправили TON — баланс зачислится автоматически в течение 10 минут.';
+                document.getElementById('ton-send-btn').disabled = false;
+                document.getElementById('ton-send-btn').textContent = 'Отправить TON';
                 return;
             }
-            var html = '';
-            for (var i = 0; i < gameState.history.length; i++) {
-                var h = gameState.history[i];
-                html += '<div class="history-item">';
-                html += '<span class="history-time">' + h.time.toLocaleTimeString() + '</span>';
-                html += '<div class="history-result">';
-                html += '<span class="history-multiplier ' + (h.won ? 'win' : 'loss') + '">' + h.crashPoint.toFixed(2) + 'x</span>';
-                html += '<span class="history-profit ' + (h.profit >= 0 ? 'positive' : 'negative') + '">' + (h.profit >= 0 ? '+' : '') + formatMoney(h.profit) + '</span>';
-                html += '</div></div>';
-            }
-            historyList.innerHTML = html;
-        }
 
-        // ==================== THREE.JS SCENE ====================
-        var threeScene = null;
+            try {
+                const res = await fetch(BACKEND_URL + '/api/deposit/check/' + depId, {
+                    headers: { 'x-telegram-init-data': tgInitData }
+                });
+                const data = await res.json();
 
-        function getContainerSize() {
-            var container = document.getElementById('container');
-            var w = container.offsetWidth;
-            var h = container.offsetHeight;
-            if (!w || w < 100) w = window.innerWidth - 40;
-            if (!h || h < 100) h = window.innerHeight - 200;
-            return { width: w, height: h };
-        }
+                if (data.status === 'completed' && data.credited) {
+                    clearInterval(depositPollTimer);
 
-        function initThreeScene() {
-            var size = getContainerSize();
-            var WIDTH = size.width;
-            var HEIGHT = size.height;
+                    balance = data.new_balance;
+                    updateBalanceDisplay();
 
-            var scene = new THREE.Scene();
+                    document.getElementById('deposit-status').className = 'deposit-status success';
+                    document.getElementById('deposit-status').textContent =
+                        '✅ Баланс пополнен на ' + Math.round(data.amount_rub).toLocaleString('ru') + ' RUB!';
 
-            var camera = new THREE.PerspectiveCamera(55, WIDTH / HEIGHT, 1, 10000);
-            camera.position.set(0, 0, 250);
-            scene.add(camera);
-            scene.fog = new THREE.Fog(0x0a0a0a, 150, 600);
+                    document.getElementById('ton-send-btn').disabled = false;
+                    document.getElementById('ton-send-btn').textContent = 'Отправить TON';
+                    document.getElementById('deposit-ton-amount').value = '';
 
-            var renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-            renderer.setSize(WIDTH, HEIGHT);
-            renderer.setClearColor(0x0a0a0a, 1);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-            renderer.shadowMap.enabled = true;
+                    showToast('💰 Баланс пополнен!');
+                }
+            } catch(e) {}
+        }, 15000); // check every 15 seconds
+    }
 
-            var container = document.getElementById('container');
-            container.innerHTML = '';
-            container.appendChild(renderer.domElement);
+    // ==================== MODAL ====================
+    function openDepositModal() {
+        document.getElementById('modal-overlay').classList.add('active');
+        document.getElementById('deposit-modal').classList.add('active');
+        fetchTonRate();
+    }
+    function closeDepositModal() {
+        document.getElementById('modal-overlay').classList.remove('active');
+        document.getElementById('deposit-modal').classList.remove('active');
+    }
 
-            window.addEventListener('resize', function() {
-                var s = getContainerSize();
-                renderer.setSize(s.width, s.height);
-                camera.aspect = s.width / s.height;
-                camera.updateProjectionMatrix();
+    // ==================== BALANCE ====================
+    function formatMoney(num) {
+        var n = Number(num) || 0;
+        return n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+    function updateBalanceDisplay() {
+        var el = document.getElementById('balance-display');
+        if (el) el.innerHTML = formatMoney(balance) + ' <span>RUB</span>';
+    }
+
+    // ==================== STATS from backend ====================
+    async function loadStats() {
+        try {
+            const res = await fetch(BACKEND_URL + '/api/stats', {
+                headers: { 'x-telegram-init-data': tgInitData }
             });
-
-            // Lights
-            var ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
-            var shadowLight = new THREE.DirectionalLight(0xffffff, 0.6);
-            shadowLight.position.set(150, 350, 350);
-            scene.add(ambientLight);
-            scene.add(shadowLight);
-
-            var rimLight = new THREE.DirectionalLight(0x88aaff, 0.3);
-            rimLight.position.set(-200, -100, -200);
-            scene.add(rimLight);
-
-            var Colors = {
-                body: 0x1a1a1a,
-                accent: 0x2d2d2d,
-                highlight: 0x404040,
-                glow: 0xffffff,
-                gold: 0xc9a227,
-                glass: 0x111111,
-            };
-
-            // Dust particles
-            var DustArray = [];
-            function createDust() {
-                var dustGroup = new THREE.Object3D();
-                for (var i = 0; i < 60; i++) {
-                    var geom = new THREE.SphereGeometry(1, 4, 4);
-                    var mat = new THREE.MeshBasicMaterial({
-                        color: 0xffffff, transparent: true,
-                        opacity: 0.03 + Math.random() * 0.08
-                    });
-                    var mesh = new THREE.Mesh(geom, mat);
-                    mesh.position.set(
-                        -300 + Math.random() * 600,
-                        -300 + Math.random() * 600,
-                        50 + Math.random() * 200
-                    );
-                    dustGroup.add(mesh);
-                    DustArray.push(mesh);
-                }
-                scene.add(dustGroup);
+            const data = await res.json();
+            if (data.stats) {
+                var s = data.stats;
+                document.getElementById('stat-games').textContent = s.games || 0;
+                document.getElementById('stat-wins').textContent = s.wins || 0;
+                document.getElementById('stat-total-bet').textContent = formatMoney(s.total_bet || 0);
+                document.getElementById('stat-total-win').textContent = formatMoney(s.total_win || 0);
             }
-
-            // ==================== MOON ====================
-            var moonGroup = null;
-            var moonVisible = false;
-
-            function createMoon() {
-                moonGroup = new THREE.Object3D();
-
-                // Moon sphere
-                var moonGeom = new THREE.SphereGeometry(38, 32, 32);
-                var moonMat = new THREE.MeshPhongMaterial({
-                    color: 0xd0cdc0,
-                    shininess: 5,
-                    flatShading: true,
-                });
-                var moonMesh = new THREE.Mesh(moonGeom, moonMat);
-                moonGroup.add(moonMesh);
-
-                // Craters
-                var craterPositions = [
-                    { x: 12, y: 8, z: 36, r: 7 },
-                    { x: -18, y: 20, z: 32, r: 9 },
-                    { x: 22, y: -14, z: 30, r: 5 },
-                    { x: -8, y: -22, z: 34, r: 11 },
-                    { x: 30, y: 5, z: 22, r: 4 },
-                ];
-                craterPositions.forEach(function(c) {
-                    var craterGeom = new THREE.SphereGeometry(c.r, 16, 16);
-                    var craterMat = new THREE.MeshPhongMaterial({ color: 0xb8b4a8, shininess: 2, flatShading: true });
-                    var crater = new THREE.Mesh(craterGeom, craterMat);
-                    crater.position.set(c.x, c.y, c.z);
-                    moonGroup.add(crater);
-                });
-
-                // Moon glow halo
-                var glowGeom = new THREE.SphereGeometry(44, 16, 16);
-                var glowMat = new THREE.MeshBasicMaterial({
-                    color: 0xd8d4c0, transparent: true, opacity: 0.06, side: THREE.BackSide
-                });
-                var glow = new THREE.Mesh(glowGeom, glowMat);
-                moonGroup.add(glow);
-
-                // Position to the right and slightly above the scene
-                moonGroup.position.set(280, 100, -180);
-                moonGroup.visible = false;
-                scene.add(moonGroup);
-            }
-
-            window.updateMoon = function(multiplier) {
-                if (!moonGroup) return;
-                if (multiplier >= 3.0 && !moonVisible) {
-                    moonVisible = true;
-                    moonGroup.visible = true;
-                }
-            };
-
-            window.hideMoon = function() {
-                moonVisible = false;
-                if (moonGroup) moonGroup.visible = false;
-            };
-
-            // Robot
-            var robot = null;
-            var robotParts = {};
-            var eyeGlow = [];
-            var jetStreamL = null, jetStreamR = null;
-            var ParticleArray = [];
-            var smokeParticles = [];
-            var steamParticles = [];
-
-            function createJets() {
-                jetStreamL = new THREE.Object3D();
-                jetStreamR = new THREE.Object3D();
-
-                function buildJet(target) {
-                    for (var i = 0; i < 70; i++) {
-                        var size = 2 + Math.random() * 5;
-                        var geom = new THREE.SphereGeometry(size, 8, 8);
-                        var grayShade = 0.25 + Math.random() * 0.75;
-                        var mat = new THREE.MeshBasicMaterial({
-                            color: new THREE.Color(grayShade, grayShade, grayShade),
-                            transparent: true, opacity: 0.3 + Math.random() * 0.5
-                        });
-                        var mesh = new THREE.Mesh(geom, mat);
-                        mesh.position.set(
-                            (Math.random() - 0.5) * 24,
-                            -Math.random() * 110,
-                            (Math.random() - 0.5) * 24
-                        );
-                        mesh.userData.baseY = mesh.position.y;
-                        mesh.userData.baseOpacity = mat.opacity;
-                        ParticleArray.push({ mesh: mesh, mat: mat, type: 'jet' });
-                        target.add(mesh);
-                    }
-                }
-
-                buildJet(jetStreamL);
-                buildJet(jetStreamR);
-                jetStreamL.position.set(15, -15, -40);
-                jetStreamR.position.set(-15, -15, -40);
-                jetStreamL.visible = false;
-                jetStreamR.visible = false;
-            }
-
-            function createSmokeSystem() {
-                var smokeGroup = new THREE.Object3D();
-
-                // Smoke clouds
-                for (var i = 0; i < 70; i++) {
-                    var size = 3 + Math.random() * 10;
-                    var geom = new THREE.SphereGeometry(size, 8, 8);
-                    var grayVal = 0.2 + Math.random() * 0.6;
-                    var mat = new THREE.MeshBasicMaterial({
-                        color: new THREE.Color(grayVal, grayVal, grayVal),
-                        transparent: true, opacity: 0.08 + Math.random() * 0.2
-                    });
-                    var mesh = new THREE.Mesh(geom, mat);
-                    mesh.position.set(
-                        (Math.random() - 0.5) * 160,
-                        (Math.random() - 0.5) * 160,
-                        (Math.random() - 0.5) * 160
-                    );
-                    mesh.userData.velocity = new THREE.Vector3(
-                        (Math.random() - 0.5) * 0.5,
-                        -Math.random() * 1.5 - 0.4,
-                        (Math.random() - 0.5) * 0.5
-                    );
-                    mesh.userData.baseOpacity = mat.opacity;
-                    smokeParticles.push({ mesh: mesh, mat: mat });
-                    smokeGroup.add(mesh);
-                }
-
-                // Steam wisps
-                for (var i = 0; i < 55; i++) {
-                    var size = 1.5 + Math.random() * 4;
-                    var geom = new THREE.SphereGeometry(size, 6, 6);
-                    var mat = new THREE.MeshBasicMaterial({
-                        color: 0xffffff, transparent: true, opacity: 0.08 + Math.random() * 0.2
-                    });
-                    var mesh = new THREE.Mesh(geom, mat);
-                    mesh.position.set(
-                        (Math.random() - 0.5) * 120,
-                        (Math.random() - 0.5) * 120,
-                        (Math.random() - 0.5) * 120
-                    );
-                    mesh.userData.velocity = new THREE.Vector3(
-                        (Math.random() - 0.5) * 0.8,
-                        Math.random() * 2.0 + 1.0,
-                        (Math.random() - 0.5) * 0.8
-                    );
-                    mesh.userData.baseOpacity = mat.opacity;
-                    steamParticles.push({ mesh: mesh, mat: mat });
-                    smokeGroup.add(mesh);
-                }
-
-                scene.add(smokeGroup);
-            }
-
-            function createRobot() {
-                robot = new THREE.Object3D();
-
-                var bodyMat = new THREE.MeshPhongMaterial({ color: Colors.body, flatShading: true, shininess: 80 });
-                var accentMat = new THREE.MeshPhongMaterial({ color: Colors.accent, flatShading: true, shininess: 100 });
-                var highlightMat = new THREE.MeshPhongMaterial({ color: Colors.highlight, flatShading: true, shininess: 120 });
-                var glassMat = new THREE.MeshPhongMaterial({ color: Colors.glass, flatShading: true, transparent: true, opacity: 0.9 });
-                var glowMat = new THREE.MeshBasicMaterial({ color: Colors.glow, transparent: true, opacity: 0.9 });
-                var goldMat = new THREE.MeshPhongMaterial({ color: Colors.gold, flatShading: true, shininess: 150 });
-
-                // Head
-                var headGroup = new THREE.Object3D();
-                var geomHead = new THREE.SphereGeometry(28, 16, 12);
-                geomHead.scale(1.2, 0.9, 0.8);
-                var head = new THREE.Mesh(geomHead, bodyMat);
-                headGroup.add(head);
-
-                var geomVisor = new THREE.BoxGeometry(45, 12, 8);
-                var visor = new THREE.Mesh(geomVisor, glassMat);
-                visor.position.set(0, 5, 18);
-                headGroup.add(visor);
-
-                var geomEye = new THREE.BoxGeometry(14, 4, 2);
-                var eyeL = new THREE.Mesh(geomEye, glowMat);
-                eyeL.position.set(12, 5, 24);
-                eyeGlow.push(eyeL);
-                var eyeR = eyeL.clone();
-                eyeR.position.x = -12;
-                eyeGlow.push(eyeR);
-                robotParts.eyes = new THREE.Object3D();
-                robotParts.eyes.add(eyeL, eyeR);
-                headGroup.add(robotParts.eyes);
-
-                var geomTrim = new THREE.BoxGeometry(48, 2, 6);
-                var trimTop = new THREE.Mesh(geomTrim, goldMat);
-                trimTop.position.set(0, 13, 18);
-                headGroup.add(trimTop);
-                var trimBottom = trimTop.clone();
-                trimBottom.position.y = -3;
-                headGroup.add(trimBottom);
-
-                var geomAntenna = new THREE.CylinderGeometry(1.5, 2, 20, 8);
-                var antennaL = new THREE.Mesh(geomAntenna, highlightMat);
-                antennaL.position.set(15, 28, 0);
-                antennaL.rotation.z = 0.3;
-                headGroup.add(antennaL);
-                var antennaR = antennaL.clone();
-                antennaR.position.x = -15;
-                antennaR.rotation.z = -0.3;
-                headGroup.add(antennaR);
-
-                var geomTip = new THREE.SphereGeometry(3, 8, 8);
-                var tipL = new THREE.Mesh(geomTip, goldMat);
-                tipL.position.set(20, 42, 0);
-                headGroup.add(tipL);
-                var tipR = tipL.clone();
-                tipR.position.x = -20;
-                headGroup.add(tipR);
-
-                robotParts.headCont = new THREE.Object3D();
-                robotParts.headCont.add(headGroup);
-                robot.add(robotParts.headCont);
-
-                var geomNeck = new THREE.CylinderGeometry(8, 10, 18, 8);
-                var neck = new THREE.Mesh(geomNeck, bodyMat);
-                neck.position.y = -32;
-                headGroup.add(neck);
-                var geomNeckRing = new THREE.TorusGeometry(10, 2, 8, 16);
-                var neckRing = new THREE.Mesh(geomNeckRing, goldMat);
-                neckRing.position.y = -38;
-                neckRing.rotation.x = Math.PI / 2;
-                headGroup.add(neckRing);
-
-                // Torso
-                var torsoGroup = new THREE.Object3D();
-                var geomTorso = new THREE.BoxGeometry(50, 55, 35);
-                var torso = new THREE.Mesh(geomTorso, bodyMat);
-                torsoGroup.add(torso);
-
-                var geomChest = new THREE.BoxGeometry(35, 40, 5);
-                var chestPlate = new THREE.Mesh(geomChest, accentMat);
-                chestPlate.position.set(0, 5, 18);
-                torsoGroup.add(chestPlate);
-
-                var geomLine = new THREE.BoxGeometry(4, 50, 6);
-                var centerLine = new THREE.Mesh(geomLine, highlightMat);
-                centerLine.position.set(0, 0, 20);
-                torsoGroup.add(centerLine);
-
-                var geomLED = new THREE.BoxGeometry(20, 3, 3);
-                var ledTop = new THREE.Mesh(geomLED, glowMat);
-                ledTop.position.set(0, 20, 21);
-                torsoGroup.add(ledTop);
-
-                var textCanvas = document.createElement('canvas');
-                textCanvas.width = 256; textCanvas.height = 64;
-                var ctx = textCanvas.getContext('2d');
-                ctx.fillStyle = '#c9a227';
-                ctx.font = 'bold 36px Arial, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('ASSORTI', 128, 32);
-                var textTexture = new THREE.CanvasTexture(textCanvas);
-                var textMat = new THREE.MeshBasicMaterial({ map: textTexture, transparent: true, side: THREE.DoubleSide });
-                var geomText = new THREE.PlaneGeometry(40, 10);
-                var textMesh = new THREE.Mesh(geomText, textMat);
-                textMesh.position.set(0, -12, 23);
-                torsoGroup.add(textMesh);
-
-                var geomCore = new THREE.OctahedronGeometry(8, 0);
-                var core = new THREE.Mesh(geomCore, glowMat);
-                core.position.set(0, 0, 22);
-                core.rotation.z = Math.PI / 4;
-                torsoGroup.add(core);
-                robotParts.core = core;
-
-                var geomShoulder = new THREE.BoxGeometry(18, 12, 25);
-                var shoulderL = new THREE.Mesh(geomShoulder, accentMat);
-                shoulderL.position.set(30, 22, 0);
-                shoulderL.rotation.z = 0.3;
-                torsoGroup.add(shoulderL);
-                var shoulderR = shoulderL.clone();
-                shoulderR.position.x = -30;
-                shoulderR.rotation.z = -0.3;
-                torsoGroup.add(shoulderR);
-
-                var geomShoulderTrim = new THREE.BoxGeometry(20, 2, 27);
-                var trimL = new THREE.Mesh(geomShoulderTrim, goldMat);
-                trimL.position.set(30, 28, 0);
-                torsoGroup.add(trimL);
-                var trimR = trimL.clone();
-                trimR.position.x = -30;
-                torsoGroup.add(trimR);
-
-                var geomWaist = new THREE.BoxGeometry(40, 15, 30);
-                var waist = new THREE.Mesh(geomWaist, bodyMat);
-                waist.position.y = -35;
-                torsoGroup.add(waist);
-
-                var geomJetBase = new THREE.BoxGeometry(35, 30, 8);
-                var jetBase = new THREE.Mesh(geomJetBase, bodyMat);
-                jetBase.position.set(0, 0, -22);
-                torsoGroup.add(jetBase);
-
-                var geomJetCyl = new THREE.CylinderGeometry(10, 8, 45, 12);
-                var jetL = new THREE.Mesh(geomJetCyl, highlightMat);
-                jetL.position.set(15, 0, -32);
-                torsoGroup.add(jetL);
-                var jetR = jetL.clone();
-                jetR.position.x = -15;
-                torsoGroup.add(jetR);
-
-                var geomJetRing = new THREE.TorusGeometry(9, 1.5, 8, 16);
-                var ringL = new THREE.Mesh(geomJetRing, goldMat);
-                ringL.position.set(15, -22, -32);
-                ringL.rotation.x = Math.PI / 2;
-                torsoGroup.add(ringL);
-                var ringR = ringL.clone();
-                ringR.position.x = -15;
-                torsoGroup.add(ringR);
-
-                robot.add(torsoGroup);
-                createJets();
-                robot.add(jetStreamL);
-                robot.add(jetStreamR);
-
-                // Arms
-                robotParts.armLeft = new THREE.Object3D();
-                var geomUpperArm = new THREE.BoxGeometry(10, 30, 10);
-                var upperArmL = new THREE.Mesh(geomUpperArm, bodyMat);
-                robotParts.armLeft.add(upperArmL);
-                var geomStripe = new THREE.BoxGeometry(4, 28, 2);
-                var stripeL = new THREE.Mesh(geomStripe, goldMat);
-                stripeL.position.set(0, 0, 6);
-                upperArmL.add(stripeL);
-                var geomElbow = new THREE.SphereGeometry(7, 8, 8);
-                var elbowL = new THREE.Mesh(geomElbow, accentMat);
-                elbowL.position.y = -18;
-                upperArmL.add(elbowL);
-                var geomForearm = new THREE.BoxGeometry(8, 25, 8);
-                var forearmL = new THREE.Mesh(geomForearm, bodyMat);
-                forearmL.position.set(0, -38, 5);
-                forearmL.rotation.x = 0.5;
-                robotParts.armLeft.add(forearmL);
-                var geomHand = new THREE.BoxGeometry(15, 18, 8);
-                var handL = new THREE.Mesh(geomHand, accentMat);
-                handL.position.set(0, -55, 15);
-                robotParts.armLeft.add(handL);
-                robotParts.armLeft.position.set(42, 15, 0);
-                robotParts.armLeft.rotation.z = 0.5;
-                robot.add(robotParts.armLeft);
-
-                robotParts.armRight = robotParts.armLeft.clone();
-                robotParts.armRight.position.x = -42;
-                robotParts.armRight.rotation.z = -0.5;
-                robotParts.armRight.rotation.y = Math.PI;
-                robot.add(robotParts.armRight);
-
-                // Legs
-                robotParts.legLeft = new THREE.Object3D();
-                var geomUpperLeg = new THREE.BoxGeometry(12, 35, 12);
-                var upperLegL = new THREE.Mesh(geomUpperLeg, bodyMat);
-                robotParts.legLeft.add(upperLegL);
-                var geomLegStripe = new THREE.BoxGeometry(3, 32, 2);
-                var legStripeL = new THREE.Mesh(geomLegStripe, goldMat);
-                legStripeL.position.set(0, 0, 7);
-                upperLegL.add(legStripeL);
-                var geomKnee = new THREE.SphereGeometry(8, 8, 8);
-                var kneeL = new THREE.Mesh(geomKnee, accentMat);
-                kneeL.position.y = -22;
-                upperLegL.add(kneeL);
-                var geomLowerLeg = new THREE.BoxGeometry(10, 30, 10);
-                var lowerLegL = new THREE.Mesh(geomLowerLeg, bodyMat);
-                lowerLegL.position.set(0, -42, 3);
-                lowerLegL.rotation.x = 0.2;
-                robotParts.legLeft.add(lowerLegL);
-                var geomFoot = new THREE.BoxGeometry(20, 8, 30);
-                var footL = new THREE.Mesh(geomFoot, accentMat);
-                footL.position.set(0, -60, 8);
-                robotParts.legLeft.add(footL);
-                var geomFootTrim = new THREE.BoxGeometry(22, 2, 32);
-                var footTrimL = new THREE.Mesh(geomFootTrim, goldMat);
-                footTrimL.position.set(0, -56, 8);
-                robotParts.legLeft.add(footTrimL);
-                robotParts.legLeft.position.set(18, -50, 0);
-                robot.add(robotParts.legLeft);
-
-                robotParts.legRight = robotParts.legLeft.clone();
-                robotParts.legRight.position.x = -18;
-                robot.add(robotParts.legRight);
-
-                headGroup.position.y = 45;
-                robot.position.set(0, 0, 0);
-                robot.rotation.y = 0;
-                robot.scale.set(0.55, 0.55, 0.55);
-                scene.add(robot);
-            }
-
-            window.robotEnter = function() {
-                if (!robot) return;
-                if (jetStreamL && jetStreamR) {
-                    jetStreamL.visible = true;
-                    jetStreamR.visible = true;
-                }
-                robot.position.set(0, -60, 0);
-                robot.scale.set(0.35, 0.35, 0.35);
-                robot.rotation.y = 0;
-
-                var tl = new TimelineMax();
-                tl.to(robot.position, 1.3, { y: 0, ease: Power2.easeOut }, 0);
-                tl.to(robot.scale, 1.3, { x: 0.55, y: 0.55, z: 0.55, ease: Power2.easeOut }, 0);
-                tl.to(robot.rotation, 1.3, { y: 0, ease: Power2.easeOut }, 0);
-            };
-
-            window.robotExit = function() {
-                if (!robot) return;
-                if (jetStreamL && jetStreamR) {
-                    jetStreamL.visible = true;
-                    jetStreamR.visible = true;
-                }
-
-                var tl = new TimelineMax();
-                tl.to(robot.position, 1.5, { y: 350, ease: Power2.easeIn }, 0);
-                tl.to(robot.scale, 1.5, { x: 0.05, y: 0.05, z: 0.05, ease: Power2.easeIn }, 0);
-
-                tl.add(function() {
-                    if (jetStreamL && jetStreamR) {
-                        jetStreamL.visible = false;
-                        jetStreamR.visible = false;
-                    }
-                    robot.position.set(0, -60, 0);
-                    robot.scale.set(0.35, 0.35, 0.35);
-                    robot.rotation.y = 0;
-                }, 1.7);
-            };
-
-            function animate() {
-                var t = Date.now();
-
-                if (robot) {
-                    if (robotParts.headCont) {
-                        robotParts.headCont.rotation.z = Math.sin(t * 0.002) * 0.03;
-                        robotParts.headCont.rotation.x = Math.cos(t * 0.0015) * 0.02;
-                    }
-                    if (robotParts.core) {
-                        robotParts.core.rotation.y += 0.02;
-                        robotParts.core.rotation.x += 0.01;
-                    }
-                    if (robotParts.armLeft) robotParts.armLeft.rotation.x = Math.sin(t * 0.002) * 0.15;
-                    if (robotParts.armRight) robotParts.armRight.rotation.x = Math.sin(t * 0.002 + 0.5) * 0.15;
-                    if (robotParts.legLeft) robotParts.legLeft.rotation.x = Math.sin(t * 0.002) * 0.03;
-                    if (robotParts.legRight) robotParts.legRight.rotation.x = Math.sin(t * 0.002 + 1) * 0.03;
-
-                    if (Math.abs(robot.position.y) < 200) {
-                        robot.position.y = Math.sin(t * 0.003) * 8;
-                        robot.position.x = Math.sin(t * 0.002) * 4;
-                    }
-                }
-
-                // Eye glow
-                for (var i = 0; i < eyeGlow.length; i++) {
-                    if (eyeGlow[i]) {
-                        eyeGlow[i].material.opacity = 0.7 + Math.sin(t * 0.01) * 0.3;
-                    }
-                }
-
-                // Dust
-                for (var i = 0; i < DustArray.length; i++) {
-                    DustArray[i].position.y -= 0.3;
-                    DustArray[i].rotation.x += 0.002;
-                    DustArray[i].rotation.y += 0.001;
-                    if (DustArray[i].position.y <= -300) DustArray[i].position.y = 350;
-                }
-
-                // Moon slow rotation
-                if (moonGroup && moonGroup.visible) {
-                    moonGroup.rotation.y += 0.002;
-                }
-
-                // Jet particles
-                var jetActive = robot && jetStreamL && jetStreamL.visible;
-                if (jetActive) {
-                    for (var i = 0; i < ParticleArray.length; i++) {
-                        var p = ParticleArray[i];
-                        if (p.type !== 'jet') continue;
-                        p.mesh.position.y -= 1.8 + Math.random() * 2.4;
-                        p.mesh.scale.multiplyScalar(0.96);
-                        p.mesh.position.x += (Math.random() - 0.5) * 1.1;
-                        p.mesh.position.z += (Math.random() - 0.5) * 1.1;
-                        p.mat.opacity *= 0.96;
-
-                        if (p.mesh.position.y <= -100 || p.mat.opacity < 0.04) {
-                            p.mesh.position.y = p.mesh.userData.baseY || 0;
-                            p.mesh.position.x = (Math.random() - 0.5) * 24;
-                            p.mesh.position.z = (Math.random() - 0.5) * 24;
-                            p.mesh.scale.set(1, 1, 1);
-                            p.mat.opacity = p.mesh.userData.baseOpacity || 0.4;
-                        }
-                    }
-                }
-
-                // Smoke
-                for (var i = 0; i < smokeParticles.length; i++) {
-                    var s = smokeParticles[i];
-                    var speed = jetActive ? 2.5 : 0.2;
-                    s.mesh.position.add(s.mesh.userData.velocity.clone().multiplyScalar(speed));
-                    s.mesh.scale.multiplyScalar(1.003);
-                    s.mat.opacity *= 0.995;
-
-                    if (s.mat.opacity < 0.015 || s.mesh.position.y < -250) {
-                        s.mesh.position.set(
-                            (Math.random() - 0.5) * 160,
-                            (Math.random() - 0.5) * 50,
-                            (Math.random() - 0.5) * 100
-                        );
-                        s.mesh.scale.set(1, 1, 1);
-                        s.mat.opacity = s.mesh.userData.baseOpacity;
-                    }
-                }
-
-                // Steam
-                for (var i = 0; i < steamParticles.length; i++) {
-                    var st = steamParticles[i];
-                    var speed = jetActive ? 3.0 : 0.4;
-                    st.mesh.position.add(st.mesh.userData.velocity.clone().multiplyScalar(speed));
-                    st.mesh.scale.multiplyScalar(1.004);
-                    st.mat.opacity *= 0.993;
-
-                    if (st.mat.opacity < 0.015 || st.mesh.position.y > 250) {
-                        st.mesh.position.set(
-                            (Math.random() - 0.5) * 100,
-                            (Math.random() - 0.5) * 50 - 40,
-                            (Math.random() - 0.5) * 80
-                        );
-                        st.mesh.scale.set(1, 1, 1);
-                        st.mat.opacity = st.mesh.userData.baseOpacity;
-                    }
-                }
-
-                // Random blink
-                if (robotParts.eyes && Math.random() > 0.997) {
-                    TweenMax.to(robotParts.eyes.scale, 0.08, { y: 0, yoyo: true, repeat: 1 });
-                }
-            }
-
-            function loop() {
-                requestAnimationFrame(loop);
-                animate();
-                renderer.render(scene, camera);
-            }
-
-            createDust();
-            createRobot();
-            createSmokeSystem();
-            createMoon();
-            loop();
-
-            threeScene = { scene: scene, camera: camera, renderer: renderer };
+        } catch(e) {}
+    }
+
+    // ==================== GAME STATE ====================
+    var gameState = {
+        currentBet: 0, multiplier: 1.00, crashPoint: 1.00,
+        isRunning: false, hasBet: false, cashedOut: false,
+        autoCashoutEnabled: false, autoCashoutValue: 2.00,
+        roundNumber: 0,
+        stats: { games: 0, wins: 0, totalBet: 0, totalWin: 0 },
+        history: []
+    };
+    var gameInterval = null;
+    var gameStartTime = null;
+
+    var multiplierEl = null, multiplierHint = null, multiplierOverlay = null;
+    var statusBadge = null, roundNumberEl = null;
+
+    function initGameElements() {
+        multiplierEl = document.getElementById('multiplier');
+        multiplierHint = document.getElementById('multiplier-hint');
+        multiplierOverlay = document.getElementById('multiplier-overlay');
+        statusBadge = document.getElementById('status-badge');
+        roundNumberEl = document.getElementById('round-number');
+
+        document.getElementById('auto-toggle').addEventListener('click', toggleAutoCashout);
+        document.getElementById('auto-cashout').addEventListener('change', function() {
+            var val = parseFloat(this.value);
+            if (val > 1) gameState.autoCashoutValue = val;
+        });
+        document.getElementById('main-button').addEventListener('click', handleMainButton);
+    }
+
+    function setBet(amount) { document.getElementById('bet-amount').value = amount; }
+    function multiplyBet(mult) {
+        var current = parseFloat(document.getElementById('bet-amount').value) || 0;
+        document.getElementById('bet-amount').value = Math.max(1, Math.floor(current * mult));
+    }
+    function toggleAutoCashout() {
+        gameState.autoCashoutEnabled = !gameState.autoCashoutEnabled;
+        document.getElementById('auto-toggle').classList.toggle('active', gameState.autoCashoutEnabled);
+        if (gameState.autoCashoutEnabled) {
+            var val = parseFloat(document.getElementById('auto-cashout').value);
+            if (val > 1) gameState.autoCashoutValue = val;
+        }
+    }
+    function handleMainButton() {
+        if (gameState.isRunning && gameState.hasBet && !gameState.cashedOut) {
+            cashout();
+        } else if (!gameState.isRunning && !gameState.hasBet) {
+            placeBet();
+        }
+    }
+
+    function generateCrashPoint() {
+        var r = Math.random();
+        if (r < 0.02) return 0.00;
+        if (r < 0.03) return 1.00;
+        var crash = 0.95 / (1 - r);
+        return Math.max(1.00, Math.floor(crash * 100) / 100);
+    }
+
+    // ==================== PAST X's ====================
+    var pastXs = [];
+    function addPastX(cp) {
+        pastXs.unshift(cp);
+        if (pastXs.length > 10) pastXs.pop();
+        var c = document.getElementById('past-xs-container');
+        var html = '';
+        for (var i = 0; i < pastXs.length; i++) {
+            var x = pastXs[i];
+            var cls = 'past-x-item' + (x === 0 ? ' zero' : x < 1.5 ? ' low' : x < 3 ? ' mid' : ' high');
+            html += '<div class="' + cls + '">' + x.toFixed(2) + 'x</div>';
+        }
+        c.innerHTML = html;
+    }
+
+    // ==================== BET / GAME ====================
+    async function placeBet() {
+        var betAmount = parseFloat(document.getElementById('bet-amount').value);
+        if (!betAmount || betAmount <= 0) { showToast('Введите сумму ставки'); return; }
+        if (betAmount > balance) { showToast('Недостаточно средств'); return; }
+
+        var btn = document.getElementById('main-button');
+        btn.textContent = 'Ожидайте...';
+        btn.className = 'main-button btn-waiting';
+        btn.disabled = true;
+
+        gameState.currentBet = betAmount;
+        gameState.hasBet = true;
+        gameState.cashedOut = false;
+        gameState.stats.totalBet += betAmount;
+        gameState.roundNumber++;
+        balance -= betAmount;
+
+        updateBalanceDisplay();
+        roundNumberEl.textContent = gameState.roundNumber;
+
+        document.getElementById('current-bet-card').classList.add('active');
+        document.getElementById('current-bet-display').textContent = formatMoney(betAmount);
+        document.getElementById('potential-win').textContent = formatMoney(betAmount);
+
+        statusBadge.textContent = 'Готов';
+        statusBadge.className = 'status-badge status-ready';
+        multiplierHint.textContent = 'Раунд начинается...';
+
+        setTimeout(startGame, 800);
+    }
+
+    function startGame() {
+        gameState.crashPoint = generateCrashPoint();
+        gameState.multiplier = 1.00;
+        gameState.isRunning = true;
+        gameState.stats.games++;
+
+        if (window.robotEnter) window.robotEnter();
+
+        statusBadge.textContent = 'В игре';
+        statusBadge.className = 'status-badge status-running';
+        multiplierEl.className = 'multiplier-value normal';
+        multiplierHint.textContent = '';
+
+        if (gameState.hasBet && !gameState.cashedOut) {
+            var btn = document.getElementById('main-button');
+            btn.textContent = 'Забрать ' + formatMoney(gameState.currentBet);
+            btn.className = 'main-button btn-cashout';
+            btn.disabled = false;
         }
 
-        // Initialize Three.js right away (no splash screen)
-        window.addEventListener('DOMContentLoaded', function() {
-            setTimeout(initThreeScene, 100);
+        gameStartTime = Date.now();
+
+        gameInterval = setInterval(function() {
+            var elapsed = (Date.now() - gameStartTime) / 1000;
+            gameState.multiplier = Math.floor(Math.pow(Math.E, 0.08 * elapsed) * 100) / 100;
+
+            multiplierEl.textContent = gameState.multiplier.toFixed(2);
+            if (window.updateMoon) window.updateMoon(gameState.multiplier);
+
+            if (gameState.hasBet && !gameState.cashedOut) {
+                var pot = gameState.currentBet * gameState.multiplier;
+                document.getElementById('potential-win').textContent = formatMoney(pot);
+                document.getElementById('main-button').textContent = 'Забрать ' + formatMoney(pot);
+            }
+
+            multiplierEl.className = 'multiplier-value ' + (
+                gameState.multiplier < 1.5 ? 'normal' :
+                gameState.multiplier < 2 ? 'good' :
+                gameState.multiplier < 3 ? 'warning' : 'danger'
+            );
+
+            if (gameState.hasBet && !gameState.cashedOut && gameState.autoCashoutEnabled &&
+                gameState.multiplier >= gameState.autoCashoutValue) {
+                cashout(); return;
+            }
+            if (gameState.multiplier >= gameState.crashPoint) crash();
+        }, 50);
+    }
+
+    async function cashout() {
+        if (!gameState.isRunning || !gameState.hasBet || gameState.cashedOut) return;
+        gameState.cashedOut = true;
+
+        var winAmount = gameState.currentBet * gameState.multiplier;
+        balance += winAmount;
+        gameState.stats.wins++;
+        gameState.stats.totalWin += winAmount;
+
+        // Save to backend
+        try {
+            const res = await fetch(BACKEND_URL + '/api/game/round', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-telegram-init-data': tgInitData },
+                body: JSON.stringify({
+                    bet_rub: gameState.currentBet,
+                    crash_point: gameState.crashPoint,
+                    cashout_multiplier: gameState.multiplier,
+                    win_rub: winAmount,
+                    result: 'win'
+                })
+            });
+            if (res.ok) {
+                var data = await res.json();
+                if (data.new_balance !== undefined) balance = data.new_balance;
+            }
+        } catch(e) {}
+
+        addHistory(gameState.multiplier, true, gameState.currentBet, winAmount);
+        updateBalanceDisplay();
+        updateStats();
+
+        document.getElementById('current-bet-card').classList.remove('active');
+        statusBadge.textContent = 'Выигрыш ' + formatMoney(winAmount);
+        statusBadge.className = 'status-badge status-cashed';
+
+        var winBanner = document.createElement('div');
+        winBanner.style.cssText = 'position:absolute;top:30%;left:50%;transform:translateX(-50%);background:rgba(74,222,128,0.15);border:1px solid rgba(74,222,128,0.3);border-radius:12px;padding:10px 24px;font-size:22px;font-weight:600;color:#4ade80;z-index:25;pointer-events:none;white-space:nowrap;';
+        winBanner.textContent = '+' + formatMoney(winAmount) + ' RUB';
+        document.querySelector('.canvas-container').appendChild(winBanner);
+        setTimeout(() => { if (winBanner.parentNode) winBanner.parentNode.removeChild(winBanner); }, 2200);
+
+        var btn = document.getElementById('main-button');
+        btn.textContent = 'Ставка сделана';
+        btn.className = 'main-button btn-waiting';
+        btn.disabled = true;
+
+        gameState.hasBet = false;
+        gameState.currentBet = 0;
+    }
+
+    async function crash() {
+        clearInterval(gameInterval);
+        gameInterval = null;
+        gameState.isRunning = false;
+
+        addPastX(gameState.crashPoint);
+        statusBadge.textContent = 'КРАШ';
+        statusBadge.className = 'status-badge status-crashed';
+
+        if (gameState.hasBet && !gameState.cashedOut) {
+            // Save loss to backend
+            try {
+                await fetch(BACKEND_URL + '/api/game/round', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-telegram-init-data': tgInitData },
+                    body: JSON.stringify({
+                        bet_rub: gameState.currentBet,
+                        crash_point: gameState.crashPoint,
+                        cashout_multiplier: null,
+                        win_rub: 0,
+                        result: 'loss'
+                    })
+                });
+            } catch(e) {}
+            addHistory(gameState.crashPoint, false, gameState.currentBet, 0);
+        }
+
+        if (window.robotExit) window.robotExit();
+
+        gameState.hasBet = false;
+        gameState.currentBet = 0;
+        gameState.cashedOut = false;
+
+        document.getElementById('current-bet-card').classList.remove('active');
+        updateStats();
+
+        multiplierOverlay.innerHTML =
+            '<div class="crash-result"><div class="crash-text">КРАШ</div><div class="crash-multiplier">' +
+            gameState.crashPoint.toFixed(2) + 'x</div></div>';
+
+        var btn = document.getElementById('main-button');
+        btn.textContent = 'Сделать ставку';
+        btn.className = 'main-button btn-place-bet';
+        btn.disabled = false;
+
+        setTimeout(function() {
+            statusBadge.textContent = 'Ожидание';
+            statusBadge.className = 'status-badge';
+            resetMultiplierDisplay();
+            if (window.hideMoon) window.hideMoon();
+        }, 2500);
+    }
+
+    function resetMultiplierDisplay() {
+        multiplierOverlay.innerHTML = '<div class="multiplier-container"><span class="multiplier-value idle" id="multiplier">1.00</span><span class="multiplier-x">x</span></div><div class="multiplier-hint" id="multiplier-hint">Сделайте ставку</div>';
+        multiplierEl = document.getElementById('multiplier');
+        multiplierHint = document.getElementById('multiplier-hint');
+    }
+
+    function updateStats() {
+        document.getElementById('stat-games').textContent = gameState.stats.games;
+        document.getElementById('stat-wins').textContent = gameState.stats.wins;
+        document.getElementById('stat-total-bet').textContent = formatMoney(gameState.stats.totalBet);
+        document.getElementById('stat-total-win').textContent = formatMoney(gameState.stats.totalWin);
+    }
+
+    function addHistory(crashPoint, won, betAmount, winAmount) {
+        gameState.history.unshift({
+            crashPoint, won, betAmount, winAmount,
+            profit: won ? winAmount - betAmount : -betAmount,
+            time: new Date()
+        });
+        if (gameState.history.length > 20) gameState.history.pop();
+        renderHistory();
+    }
+
+    function renderHistory() {
+        var html = '';
+        for (var i = 0; i < gameState.history.length; i++) {
+            var h = gameState.history[i];
+            html += '<div class="history-item">';
+            html += '<span class="history-time">' + h.time.toLocaleTimeString() + '</span>';
+            html += '<div class="history-result">';
+            html += '<span class="history-multiplier ' + (h.won ? 'win' : 'loss') + '">' + h.crashPoint.toFixed(2) + 'x</span>';
+            html += '<span class="history-profit ' + (h.profit >= 0 ? 'positive' : 'negative') + '">' + (h.profit >= 0 ? '+' : '') + formatMoney(h.profit) + '</span>';
+            html += '</div></div>';
+        }
+        document.getElementById('history-list').innerHTML = html || '<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.2);font-size:12px;">История пуста</div>';
+    }
+
+    // ==================== THREE.JS SCENE ====================
+    function getContainerSize() {
+        var c = document.getElementById('container');
+        return { width: c.offsetWidth || window.innerWidth - 40, height: c.offsetHeight || window.innerHeight - 200 };
+    }
+
+    function initThreeScene() {
+        initGameElements();
+        var size = getContainerSize();
+        var WIDTH = size.width, HEIGHT = size.height;
+
+        var scene = new THREE.Scene();
+        var camera = new THREE.PerspectiveCamera(55, WIDTH / HEIGHT, 1, 10000);
+        camera.position.set(0, 0, 250);
+        scene.add(camera);
+        scene.fog = new THREE.Fog(0x0a0a0a, 150, 600);
+
+        var renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(WIDTH, HEIGHT);
+        renderer.setClearColor(0x0a0a0a, 1);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+        var container = document.getElementById('container');
+        container.innerHTML = '';
+        container.appendChild(renderer.domElement);
+
+        window.addEventListener('resize', function() {
+            var s = getContainerSize();
+            renderer.setSize(s.width, s.height);
+            camera.aspect = s.width / s.height;
+            camera.updateProjectionMatrix();
         });
 
-        // Prevent number input scroll
-        document.addEventListener('wheel', function(e) {
-            if (document.activeElement && document.activeElement.type === 'number' &&
-                document.activeElement === betAmountInput) {
-                document.activeElement.blur();
+        var ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        var shadowLight = new THREE.DirectionalLight(0xffffff, 0.6);
+        shadowLight.position.set(150, 350, 350);
+        scene.add(ambientLight, shadowLight);
+        var rimLight = new THREE.DirectionalLight(0x88aaff, 0.3);
+        rimLight.position.set(-200, -100, -200);
+        scene.add(rimLight);
+
+        var Colors = { body: 0x1a1a1a, accent: 0x2d2d2d, highlight: 0x404040, glow: 0xffffff, gold: 0xc9a227, glass: 0x111111 };
+
+        // Dust
+        var DustArray = [];
+        var dustGroup = new THREE.Object3D();
+        for (var i = 0; i < 60; i++) {
+            var geom = new THREE.SphereGeometry(1, 4, 4);
+            var mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.03 + Math.random() * 0.08 });
+            var mesh = new THREE.Mesh(geom, mat);
+            mesh.position.set(-300 + Math.random() * 600, -300 + Math.random() * 600, 50 + Math.random() * 200);
+            dustGroup.add(mesh); DustArray.push(mesh);
+        }
+        scene.add(dustGroup);
+
+        // Moon
+        var moonGroup = null, moonVisible = false;
+        function createMoon() {
+            moonGroup = new THREE.Object3D();
+            var moonMesh = new THREE.Mesh(new THREE.SphereGeometry(38, 32, 32), new THREE.MeshPhongMaterial({ color: 0xd0cdc0, shininess: 5, flatShading: true }));
+            moonGroup.add(moonMesh);
+            [[12,8,36,7],[-18,20,32,9],[22,-14,30,5],[-8,-22,34,11],[30,5,22,4]].forEach(function(c) {
+                var cm = new THREE.Mesh(new THREE.SphereGeometry(c[3], 16, 16), new THREE.MeshPhongMaterial({ color: 0xb8b4a8, shininess: 2, flatShading: true }));
+                cm.position.set(c[0], c[1], c[2]); moonGroup.add(cm);
+            });
+            var glow = new THREE.Mesh(new THREE.SphereGeometry(44, 16, 16), new THREE.MeshBasicMaterial({ color: 0xd8d4c0, transparent: true, opacity: 0.06, side: THREE.BackSide }));
+            moonGroup.add(glow);
+            moonGroup.position.set(280, 100, -180);
+            moonGroup.visible = false;
+            scene.add(moonGroup);
+        }
+        window.updateMoon = function(m) { if (moonGroup && m >= 3.0 && !moonVisible) { moonVisible = true; moonGroup.visible = true; } };
+        window.hideMoon = function() { moonVisible = false; if (moonGroup) moonGroup.visible = false; };
+
+        // Robot
+        var robot = null, robotParts = {}, eyeGlow = [];
+        var jetStreamL = null, jetStreamR = null, ParticleArray = [];
+        var smokeParticles = [], steamParticles = [];
+
+        function createJets() {
+            jetStreamL = new THREE.Object3D(); jetStreamR = new THREE.Object3D();
+            function buildJet(target) {
+                for (var i = 0; i < 70; i++) {
+                    var size = 2 + Math.random() * 5;
+                    var g = 0.25 + Math.random() * 0.75;
+                    var mat = new THREE.MeshBasicMaterial({ color: new THREE.Color(g,g,g), transparent: true, opacity: 0.3 + Math.random() * 0.5 });
+                    var mesh = new THREE.Mesh(new THREE.SphereGeometry(size, 8, 8), mat);
+                    mesh.position.set((Math.random()-0.5)*24, -Math.random()*110, (Math.random()-0.5)*24);
+                    mesh.userData.baseY = mesh.position.y;
+                    mesh.userData.baseOpacity = mat.opacity;
+                    ParticleArray.push({ mesh, mat, type: 'jet' });
+                    target.add(mesh);
+                }
             }
-        });
+            buildJet(jetStreamL); buildJet(jetStreamR);
+            jetStreamL.position.set(15, -15, -40); jetStreamR.position.set(-15, -15, -40);
+            jetStreamL.visible = false; jetStreamR.visible = false;
+        }
+
+        function createSmokeSystem() {
+            var sg = new THREE.Object3D();
+            for (var i = 0; i < 70; i++) {
+                var gv = 0.2 + Math.random() * 0.6;
+                var mat = new THREE.MeshBasicMaterial({ color: new THREE.Color(gv,gv,gv), transparent: true, opacity: 0.08 + Math.random() * 0.2 });
+                var mesh = new THREE.Mesh(new THREE.SphereGeometry(3 + Math.random() * 10, 8, 8), mat);
+                mesh.position.set((Math.random()-0.5)*160, (Math.random()-0.5)*160, (Math.random()-0.5)*160);
+                mesh.userData.velocity = new THREE.Vector3((Math.random()-0.5)*0.5, -Math.random()*1.5-0.4, (Math.random()-0.5)*0.5);
+                mesh.userData.baseOpacity = mat.opacity;
+                smokeParticles.push({ mesh, mat }); sg.add(mesh);
+            }
+            for (var i = 0; i < 55; i++) {
+                var mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.08 + Math.random() * 0.2 });
+                var mesh = new THREE.Mesh(new THREE.SphereGeometry(1.5 + Math.random() * 4, 6, 6), mat);
+                mesh.position.set((Math.random()-0.5)*120, (Math.random()-0.5)*120, (Math.random()-0.5)*120);
+                mesh.userData.velocity = new THREE.Vector3((Math.random()-0.5)*0.8, Math.random()*2+1, (Math.random()-0.5)*0.8);
+                mesh.userData.baseOpacity = mat.opacity;
+                steamParticles.push({ mesh, mat }); sg.add(mesh);
+            }
+            scene.add(sg);
+        }
+
+        function createRobot() {
+            robot = new THREE.Object3D();
+            var bm = new THREE.MeshPhongMaterial({ color: Colors.body, flatShading: true, shininess: 80 });
+            var am = new THREE.MeshPhongMaterial({ color: Colors.accent, flatShading: true, shininess: 100 });
+            var hm = new THREE.MeshPhongMaterial({ color: Colors.highlight, flatShading: true, shininess: 120 });
+            var gm = new THREE.MeshPhongMaterial({ color: Colors.glass, flatShading: true, transparent: true, opacity: 0.9 });
+            var glm = new THREE.MeshBasicMaterial({ color: Colors.glow, transparent: true, opacity: 0.9 });
+            var gom = new THREE.MeshPhongMaterial({ color: Colors.gold, flatShading: true, shininess: 150 });
+
+            // Head
+            var headGroup = new THREE.Object3D();
+            var hg = new THREE.SphereGeometry(28, 16, 12); hg.scale(1.2, 0.9, 0.8);
+            headGroup.add(new THREE.Mesh(hg, bm));
+            var visor = new THREE.Mesh(new THREE.BoxGeometry(45, 12, 8), gm); visor.position.set(0, 5, 18); headGroup.add(visor);
+            var eyeL = new THREE.Mesh(new THREE.BoxGeometry(14, 4, 2), glm); eyeL.position.set(12, 5, 24); eyeGlow.push(eyeL);
+            var eyeR = eyeL.clone(); eyeR.position.x = -12; eyeGlow.push(eyeR);
+            robotParts.eyes = new THREE.Object3D(); robotParts.eyes.add(eyeL, eyeR); headGroup.add(robotParts.eyes);
+            var trimTop = new THREE.Mesh(new THREE.BoxGeometry(48, 2, 6), gom); trimTop.position.set(0, 13, 18); headGroup.add(trimTop);
+            var trimBot = trimTop.clone(); trimBot.position.y = -3; headGroup.add(trimBot);
+            var ant = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 2, 20, 8), hm);
+            var antL = ant.clone(); antL.position.set(15, 28, 0); antL.rotation.z = 0.3; headGroup.add(antL);
+            var antR = ant.clone(); antR.position.set(-15, 28, 0); antR.rotation.z = -0.3; headGroup.add(antR);
+            var tip = new THREE.Mesh(new THREE.SphereGeometry(3, 8, 8), gom);
+            var tipL = tip.clone(); tipL.position.set(20, 42, 0); headGroup.add(tipL);
+            var tipR = tip.clone(); tipR.position.set(-20, 42, 0); headGroup.add(tipR);
+            robotParts.headCont = new THREE.Object3D(); robotParts.headCont.add(headGroup); robot.add(robotParts.headCont);
+            var neck = new THREE.Mesh(new THREE.CylinderGeometry(8, 10, 18, 8), bm); neck.position.y = -32; headGroup.add(neck);
+            var neckRing = new THREE.Mesh(new THREE.TorusGeometry(10, 2, 8, 16), gom); neckRing.position.y = -38; neckRing.rotation.x = Math.PI/2; headGroup.add(neckRing);
+
+            // Torso
+            var torsoGroup = new THREE.Object3D();
+            torsoGroup.add(new THREE.Mesh(new THREE.BoxGeometry(50, 55, 35), bm));
+            var chest = new THREE.Mesh(new THREE.BoxGeometry(35, 40, 5), am); chest.position.set(0, 5, 18); torsoGroup.add(chest);
+            var cline = new THREE.Mesh(new THREE.BoxGeometry(4, 50, 6), hm); cline.position.set(0, 0, 20); torsoGroup.add(cline);
+            var led = new THREE.Mesh(new THREE.BoxGeometry(20, 3, 3), glm); led.position.set(0, 20, 21); torsoGroup.add(led);
+            var tc = document.createElement('canvas'); tc.width = 256; tc.height = 64;
+            var ctx = tc.getContext('2d'); ctx.fillStyle = '#c9a227'; ctx.font = 'bold 36px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('ASSORTI', 128, 32);
+            var ttex = new THREE.CanvasTexture(tc);
+            var tm = new THREE.Mesh(new THREE.PlaneGeometry(40, 10), new THREE.MeshBasicMaterial({ map: ttex, transparent: true, side: THREE.DoubleSide }));
+            tm.position.set(0, -12, 23); torsoGroup.add(tm);
+            var core = new THREE.Mesh(new THREE.OctahedronGeometry(8, 0), glm); core.position.set(0, 0, 22); core.rotation.z = Math.PI/4; torsoGroup.add(core); robotParts.core = core;
+            var shl = new THREE.Mesh(new THREE.BoxGeometry(18, 12, 25), am); shl.position.set(30, 22, 0); shl.rotation.z = 0.3; torsoGroup.add(shl);
+            var shr = shl.clone(); shr.position.x = -30; shr.rotation.z = -0.3; torsoGroup.add(shr);
+            var stl = new THREE.Mesh(new THREE.BoxGeometry(20, 2, 27), gom); stl.position.set(30, 28, 0); torsoGroup.add(stl);
+            var str = stl.clone(); str.position.x = -30; torsoGroup.add(str);
+            var waist = new THREE.Mesh(new THREE.BoxGeometry(40, 15, 30), bm); waist.position.y = -35; torsoGroup.add(waist);
+            var jbase = new THREE.Mesh(new THREE.BoxGeometry(35, 30, 8), bm); jbase.position.set(0, 0, -22); torsoGroup.add(jbase);
+            var jcyl = new THREE.Mesh(new THREE.CylinderGeometry(10, 8, 45, 12), hm);
+            var jl = jcyl.clone(); jl.position.set(15, 0, -32); torsoGroup.add(jl);
+            var jr = jcyl.clone(); jr.position.set(-15, 0, -32); torsoGroup.add(jr);
+            var jring = new THREE.Mesh(new THREE.TorusGeometry(9, 1.5, 8, 16), gom);
+            var rl = jring.clone(); rl.position.set(15, -22, -32); rl.rotation.x = Math.PI/2; torsoGroup.add(rl);
+            var rr = jring.clone(); rr.position.set(-15, -22, -32); rr.rotation.x = Math.PI/2; torsoGroup.add(rr);
+            robot.add(torsoGroup);
+
+            createJets(); robot.add(jetStreamL); robot.add(jetStreamR);
+
+            // Arms
+            function makeArm() {
+                var ag = new THREE.Object3D();
+                var ua = new THREE.Mesh(new THREE.BoxGeometry(10, 30, 10), bm); ag.add(ua);
+                var st = new THREE.Mesh(new THREE.BoxGeometry(4, 28, 2), gom); st.position.set(0, 0, 6); ua.add(st);
+                var elb = new THREE.Mesh(new THREE.SphereGeometry(7, 8, 8), am); elb.position.y = -18; ua.add(elb);
+                var fa = new THREE.Mesh(new THREE.BoxGeometry(8, 25, 8), bm); fa.position.set(0, -38, 5); fa.rotation.x = 0.5; ag.add(fa);
+                var hand = new THREE.Mesh(new THREE.BoxGeometry(15, 18, 8), am); hand.position.set(0, -55, 15); ag.add(hand);
+                return ag;
+            }
+            robotParts.armLeft = makeArm(); robotParts.armLeft.position.set(42, 15, 0); robotParts.armLeft.rotation.z = 0.5; robot.add(robotParts.armLeft);
+            robotParts.armRight = robotParts.armLeft.clone(); robotParts.armRight.position.x = -42; robotParts.armRight.rotation.z = -0.5; robotParts.armRight.rotation.y = Math.PI; robot.add(robotParts.armRight);
+
+            // Legs
+            function makeLeg() {
+                var lg = new THREE.Object3D();
+                var ul = new THREE.Mesh(new THREE.BoxGeometry(12, 35, 12), bm); lg.add(ul);
+                var lst = new THREE.Mesh(new THREE.BoxGeometry(3, 32, 2), gom); lst.position.set(0, 0, 7); ul.add(lst);
+                var knee = new THREE.Mesh(new THREE.SphereGeometry(8, 8, 8), am); knee.position.y = -22; ul.add(knee);
+                var ll = new THREE.Mesh(new THREE.BoxGeometry(10, 30, 10), bm); ll.position.set(0, -42, 3); ll.rotation.x = 0.2; lg.add(ll);
+                var foot = new THREE.Mesh(new THREE.BoxGeometry(20, 8, 30), am); foot.position.set(0, -60, 8); lg.add(foot);
+                var ftrim = new THREE.Mesh(new THREE.BoxGeometry(22, 2, 32), gom); ftrim.position.set(0, -56, 8); lg.add(ftrim);
+                return lg;
+            }
+            robotParts.legLeft = makeLeg(); robotParts.legLeft.position.set(18, -50, 0); robot.add(robotParts.legLeft);
+            robotParts.legRight = robotParts.legLeft.clone(); robotParts.legRight.position.x = -18; robot.add(robotParts.legRight);
+
+            headGroup.position.y = 45;
+            robot.position.set(0, 0, 0); robot.scale.set(0.55, 0.55, 0.55);
+            scene.add(robot);
+        }
+
+        window.robotEnter = function() {
+            if (!robot) return;
+            jetStreamL.visible = true; jetStreamR.visible = true;
+            robot.position.set(0, -60, 0); robot.scale.set(0.35, 0.35, 0.35);
+            var tl = new TimelineMax();
+            tl.to(robot.position, 1.3, { y: 0, ease: Power2.easeOut }, 0);
+            tl.to(robot.scale, 1.3, { x: 0.55, y: 0.55, z: 0.55, ease: Power2.easeOut }, 0);
+        };
+        window.robotExit = function() {
+            if (!robot) return;
+            jetStreamL.visible = true; jetStreamR.visible = true;
+            var tl = new TimelineMax();
+            tl.to(robot.position, 1.5, { y: 350, ease: Power2.easeIn }, 0);
+            tl.to(robot.scale, 1.5, { x: 0.05, y: 0.05, z: 0.05, ease: Power2.easeIn }, 0);
+            tl.add(function() {
+                jetStreamL.visible = false; jetStreamR.visible = false;
+                robot.position.set(0, -60, 0); robot.scale.set(0.35, 0.35, 0.35);
+            }, 1.7);
+        };
+
+        function animate() {
+            var t = Date.now();
+            if (robot) {
+                if (robotParts.headCont) { robotParts.headCont.rotation.z = Math.sin(t*0.002)*0.03; robotParts.headCont.rotation.x = Math.cos(t*0.0015)*0.02; }
+                if (robotParts.core) { robotParts.core.rotation.y += 0.02; robotParts.core.rotation.x += 0.01; }
+                if (robotParts.armLeft) robotParts.armLeft.rotation.x = Math.sin(t*0.002)*0.15;
+                if (robotParts.armRight) robotParts.armRight.rotation.x = Math.sin(t*0.002+0.5)*0.15;
+                if (robotParts.legLeft) robotParts.legLeft.rotation.x = Math.sin(t*0.002)*0.03;
+                if (robotParts.legRight) robotParts.legRight.rotation.x = Math.sin(t*0.002+1)*0.03;
+                if (Math.abs(robot.position.y) < 200) {
+                    robot.position.y = Math.sin(t*0.003)*8;
+                    robot.position.x = Math.sin(t*0.002)*4;
+                }
+            }
+            eyeGlow.forEach(e => { if (e) e.material.opacity = 0.7 + Math.sin(t*0.01)*0.3; });
+            DustArray.forEach(d => { d.position.y -= 0.3; d.rotation.x += 0.002; if (d.position.y <= -300) d.position.y = 350; });
+            if (moonGroup && moonGroup.visible) moonGroup.rotation.y += 0.002;
+            var jetActive = robot && jetStreamL && jetStreamL.visible;
+            ParticleArray.forEach(p => {
+                if (p.type !== 'jet' || !jetActive) return;
+                p.mesh.position.y -= 1.8 + Math.random()*2.4;
+                p.mesh.scale.multiplyScalar(0.96);
+                p.mesh.position.x += (Math.random()-0.5)*1.1;
+                p.mesh.position.z += (Math.random()-0.5)*1.1;
+                p.mat.opacity *= 0.96;
+                if (p.mesh.position.y <= -100 || p.mat.opacity < 0.04) {
+                    p.mesh.position.y = p.mesh.userData.baseY || 0;
+                    p.mesh.position.x = (Math.random()-0.5)*24;
+                    p.mesh.position.z = (Math.random()-0.5)*24;
+                    p.mesh.scale.set(1,1,1); p.mat.opacity = p.mesh.userData.baseOpacity || 0.4;
+                }
+            });
+            smokeParticles.forEach(s => {
+                var sp = jetActive ? 2.5 : 0.2;
+                s.mesh.position.add(s.mesh.userData.velocity.clone().multiplyScalar(sp));
+                s.mesh.scale.multiplyScalar(1.003); s.mat.opacity *= 0.995;
+                if (s.mat.opacity < 0.015 || s.mesh.position.y < -250) {
+                    s.mesh.position.set((Math.random()-0.5)*160, (Math.random()-0.5)*50, (Math.random()-0.5)*100);
+                    s.mesh.scale.set(1,1,1); s.mat.opacity = s.mesh.userData.baseOpacity;
+                }
+            });
+            steamParticles.forEach(st => {
+                var sp = jetActive ? 3.0 : 0.4;
+                st.mesh.position.add(st.mesh.userData.velocity.clone().multiplyScalar(sp));
+                st.mesh.scale.multiplyScalar(1.004); st.mat.opacity *= 0.993;
+                if (st.mat.opacity < 0.015 || st.mesh.position.y > 250) {
+                    st.mesh.position.set((Math.random()-0.5)*100, (Math.random()-0.5)*50-40, (Math.random()-0.5)*80);
+                    st.mesh.scale.set(1,1,1); st.mat.opacity = st.mesh.userData.baseOpacity;
+                }
+            });
+            if (robot && robotParts.eyes && Math.random() > 0.997) {
+                TweenMax.to(robotParts.eyes.scale, 0.08, { y: 0, yoyo: true, repeat: 1 });
+            }
+        }
+
+        function loop() { requestAnimationFrame(loop); animate(); renderer.render(scene, camera); }
+
+        createSmokeSystem(); createRobot(); createMoon(); loop();
+    }
+
+    // ==================== INIT ====================
+    window.addEventListener('DOMContentLoaded', function() {
+        initTonConnect();
+        initAuth();
+    });
     </script>
 </body>
 </html>
