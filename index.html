@@ -677,7 +677,7 @@
 
     <script>
     // ==================== CONFIG ====================
-    const BACKEND_URL = 'https://bbback-production.up.railway.app'; // ← ЗАМЕНИТЕ после деплоя
+    const BACKEND_URL = 'https://bbback-production.up.railway.app/'; // ← ЗАМЕНИТЕ после деплоя
     const WALLET_ADDRESS = 'UQAVxMR3ycUvfkmAC8x5elwY9X-jX77sOp2wEVobK1uhvdR4';
 
     // ==================== TOAST ====================
@@ -905,8 +905,7 @@
                 messages: [
                     {
                         address: WALLET_ADDRESS,
-                        amount: nanoTons,
-                        payload: '' // empty payload
+                        amount: nanoTons
                     }
                 ]
             });
@@ -1704,4 +1703,3 @@
     </script>
 </body>
 </html>
-
