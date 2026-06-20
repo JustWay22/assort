@@ -495,32 +495,7 @@
             </div>
         </div>
 
-        <!-- CryptoBot deposit (instant, webhook-verified) -->
-        <div class="ton-deposit-section" style="background: rgba(38,161,123,0.08); border-color: rgba(38,161,123,0.25);">
-            <div class="ton-deposit-title">
-                <div class="dot" style="background:#26a17b;"></div>
-                Через @CryptoBot (мгновенно)
-            </div>
-
-            <div class="ton-rate-info">Выберите валюту и сумму — оплата откроется в Telegram</div>
-
-            <div class="ton-amount-input-row">
-                <select class="ton-amount-input" id="cb-asset" style="flex:0 0 110px; cursor:pointer;">
-                    <option value="USDT">USDT</option>
-                    <option value="TON">TON</option>
-                    <option value="BTC">BTC</option>
-                    <option value="ETH">ETH</option>
-                </select>
-                <input type="number" class="ton-amount-input" id="cb-amount"
-                    placeholder="Сумма" min="0.01" step="0.01">
-                <button class="ton-send-btn" onclick="createCryptoBotInvoice()" id="cb-pay-btn" style="background: linear-gradient(135deg, #26a17b, #1e8a6a);">
-                    Оплатить
-                </button>
-            </div>
-            <div class="deposit-status" id="cb-deposit-status"></div>
-        </div>
-
-        <div class="manual-divider">или</div>
+        <div class="manual-divider">или вручную</div>
 
         <div class="deposit-methods">
             <div class="deposit-method">
@@ -677,7 +652,7 @@
 
     <script>
     // ==================== CONFIG ====================
-    const BACKEND_URL = 'https://YOUR-RAILWAY-URL.railway.app'; // ← ЗАМЕНИТЕ после деплоя
+    const BACKEND_URL = 'https://bbback-production.up.railway.app'; // ← ЗАМЕНИТЕ после деплоя
     const WALLET_ADDRESS = 'UQAVxMR3ycUvfkmAC8x5elwY9X-jX77sOp2wEVobK1uhvdR4';
 
     // ==================== TOAST ====================
@@ -971,105 +946,6 @@
                 }
             } catch(e) {}
         }, 15000); // check every 15 seconds
-    }
-
-    // ==================== CRYPTOBOT ====================
-    var cbInvoiceId = null;
-    var cbPollTimer = null;
-
-    async function createCryptoBotInvoice() {
-        var asset = document.getElementById('cb-asset').value;
-        var amount = parseFloat(document.getElementById('cb-amount').value);
-
-        if (!amount || amount <= 0) { showToast('Введите сумму'); return; }
-
-        var btn = document.getElementById('cb-pay-btn');
-        var statusEl = document.getElementById('cb-deposit-status');
-        btn.disabled = true;
-        btn.textContent = 'Создание счёта...';
-        statusEl.className = 'deposit-status waiting';
-        statusEl.textContent = '⏳ Создаём счёт на оплату...';
-
-        try {
-            const res = await fetch(BACKEND_URL + '/api/cryptobot/create-invoice', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-telegram-init-data': tgInitData
-                },
-                body: JSON.stringify({ amount, asset })
-            });
-
-            if (!res.ok) {
-                var err = await res.json();
-                throw new Error(err.error || 'Ошибка сервера');
-            }
-
-            var data = await res.json();
-            cbInvoiceId = data.invoice_id;
-
-            statusEl.textContent = '📱 Открываем оплату...';
-
-            // Prefer opening inside Telegram if mini_app_url is available and we're in Telegram
-            var urlToOpen = data.mini_app_url || data.pay_url;
-
-            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink && data.mini_app_url) {
-                window.Telegram.WebApp.openTelegramLink(data.mini_app_url);
-            } else if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openLink) {
-                window.Telegram.WebApp.openLink(urlToOpen);
-            } else {
-                window.open(urlToOpen, '_blank');
-            }
-
-            statusEl.textContent = '🔍 Ожидаем оплату...';
-            startCryptoBotPolling(cbInvoiceId);
-
-        } catch(e) {
-            statusEl.className = 'deposit-status error';
-            statusEl.textContent = '❌ Ошибка: ' + e.message;
-        } finally {
-            btn.disabled = false;
-            btn.textContent = 'Оплатить';
-        }
-    }
-
-    function startCryptoBotPolling(invoiceId) {
-        var attempts = 0;
-        var maxAttempts = 60; // ~15 minutes at 15s interval
-
-        if (cbPollTimer) clearInterval(cbPollTimer);
-
-        cbPollTimer = setInterval(async () => {
-            attempts++;
-            if (attempts > maxAttempts) {
-                clearInterval(cbPollTimer);
-                document.getElementById('cb-deposit-status').className = 'deposit-status error';
-                document.getElementById('cb-deposit-status').textContent =
-                    '⏰ Истекло время ожидания. Если вы оплатили — баланс зачислится автоматически.';
-                return;
-            }
-
-            try {
-                const res = await fetch(BACKEND_URL + '/api/cryptobot/check-invoice/' + invoiceId, {
-                    headers: { 'x-telegram-init-data': tgInitData }
-                });
-                const data = await res.json();
-
-                if (data.status === 'paid' && data.credited) {
-                    clearInterval(cbPollTimer);
-
-                    balance = data.new_balance;
-                    updateBalanceDisplay();
-
-                    var statusEl = document.getElementById('cb-deposit-status');
-                    statusEl.className = 'deposit-status success';
-                    statusEl.textContent = '✅ Баланс пополнен!';
-
-                    document.getElementById('cb-amount').value = '';
-                    showToast('💰 Баланс пополнен!');
-                }
-            } catch(e) {}
-        }, 15000);
     }
 
     // ==================== MODAL ====================
