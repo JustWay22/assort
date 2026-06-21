@@ -62,32 +62,146 @@
             height: 100vh; max-width: 1800px;
             margin: 0 auto; padding: 16px; gap: 16px;
         }
-        body.mobile .game-container { padding: 8px; gap: 8px; }
-        body.mobile .main-area { flex-direction: column; gap: 8px; }
-        body.mobile .canvas-container { min-height: 360px; max-height: 50vh; flex: 0 0 auto; }
-        body.mobile .control-panel { width: 100%; flex-direction: column; gap: 8px; flex: 1; overflow-y: auto; }
-        body.mobile .panel-card { padding: 14px; }
-        body.mobile .header { padding: 10px 14px; }
-        body.mobile .logo { font-size: 16px; letter-spacing: 2px; }
-        body.mobile .logo-subtitle { font-size: 8px; }
-        body.mobile .balance-amount { font-size: 18px; }
-        body.mobile .balance-card { padding: 8px 14px; gap: 10px; }
-        body.mobile .balance-icon { width: 32px; height: 32px; font-size: 14px; }
-        body.mobile .multiplier-value { font-size: 52px; }
-        body.mobile .multiplier-x { font-size: 26px; }
-        body.mobile .quick-bet-grid { grid-template-columns: repeat(4, 1fr); }
-        body.mobile .quick-btn { padding: 10px 6px; font-size: 12px; }
-        body.mobile .bet-input { font-size: 18px; padding: 14px 60px 14px 14px; }
-        body.mobile .main-button { padding: 16px; font-size: 13px; }
-        body.mobile .stats-grid { grid-template-columns: repeat(4, 1fr); }
+        /* ====================================================== */
+        /* ====== MOBILE LAYOUT — applied via body.mobile ====== */
+        /* ====================================================== */
+        body.mobile { overflow-y: auto; }
+        body.mobile .game-container {
+            height: auto;
+            min-height: 100vh;
+            padding: 8px;
+            gap: 8px;
+        }
+        body.mobile .main-area {
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+            min-height: 0;
+        }
+        body.mobile .canvas-container {
+            flex: 0 0 auto;
+            height: 46vh;
+            min-height: 300px;
+            max-height: 420px;
+            border-radius: 16px;
+        }
+        body.mobile .control-panel {
+            width: 100%;
+            flex-direction: column;
+            gap: 8px;
+            flex: none;
+        }
+        body.mobile .panel-card { padding: 14px; border-radius: 14px; }
+        body.mobile .panel-title { font-size: 9px; margin-bottom: 12px; }
+
+        /* Header — mobile: two-row stacked layout so nothing overlaps */
+        body.mobile .header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 8px;
+            padding: 10px 12px;
+            border-radius: 14px;
+        }
+        body.mobile .logo-section { justify-content: space-between; }
+        body.mobile .logo-icon { width: 36px; height: 36px; border-radius: 9px; }
+        body.mobile .logo { font-size: 15px; letter-spacing: 1.5px; }
+        body.mobile .logo-subtitle { font-size: 7px; letter-spacing: 2px; }
+        body.mobile .header-right {
+            display: grid;
+            grid-template-columns: 1fr auto auto auto;
+            gap: 6px;
+            align-items: stretch;
+        }
+        body.mobile .balance-card { padding: 8px 12px; gap: 8px; border-radius: 10px; }
+        body.mobile .balance-icon { width: 30px; height: 30px; font-size: 13px; border-radius: 8px; }
+        body.mobile .balance-label { font-size: 8px; letter-spacing: 1px; }
+        body.mobile .balance-amount { font-size: 15px; }
+        body.mobile .balance-amount span { font-size: 11px; }
+        body.mobile .ton-connect-btn { padding: 0 10px; font-size: 10px; border-radius: 10px; gap: 4px; white-space: nowrap; }
+        body.mobile .ton-connect-btn span:first-child { display: none; }
+        body.mobile .deposit-btn, body.mobile .profile-btn { width: 36px; height: 36px; border-radius: 10px; font-size: 18px; }
+
+        /* Multiplier display */
+        body.mobile .multiplier-value { font-size: 44px; letter-spacing: -2px; }
+        body.mobile .multiplier-value.idle { font-size: 32px; }
+        body.mobile .multiplier-x { font-size: 22px; }
+        body.mobile .multiplier-hint { margin-top: 14px; font-size: 10px; letter-spacing: 2px; }
+        body.mobile .crash-text { font-size: 36px; letter-spacing: 6px; }
+        body.mobile .crash-multiplier { font-size: 20px; margin-top: 4px; }
+
+        /* Status bar / round info */
+        body.mobile .game-status-bar { top: 10px; left: 10px; right: 10px; }
+        body.mobile .status-badge { padding: 5px 10px; font-size: 9px; letter-spacing: 0.5px; border-radius: 8px; }
+        body.mobile .round-info { gap: 6px; }
+        body.mobile .round-item { padding: 5px 10px; border-radius: 6px; gap: 4px; }
+        body.mobile .round-label { font-size: 7px; }
+        body.mobile .round-value { font-size: 11px; }
+        body.mobile .past-xs-container { bottom: 8px; gap: 4px; max-width: 94%; }
+        body.mobile .past-x-item { padding: 4px 8px; font-size: 10px; border-radius: 6px; }
+
+        /* Bet controls */
+        body.mobile .bet-input { font-size: 18px; padding: 14px 56px 14px 14px; border-radius: 10px; }
+        body.mobile .bet-currency { font-size: 12px; right: 14px; }
+        body.mobile .quick-bet-grid { gap: 6px; }
+        body.mobile .quick-btn { padding: 10px 4px; font-size: 12px; border-radius: 8px; }
+        body.mobile .auto-input { padding: 12px 40px 12px 12px; font-size: 14px; border-radius: 8px; }
+        body.mobile .auto-x { font-size: 12px; right: 12px; }
+        body.mobile .auto-toggle { width: 44px; height: 26px; }
+        body.mobile .auto-toggle::after { width: 18px; height: 18px; }
+        body.mobile .auto-toggle.active::after { left: 22px; }
+
+        /* Main button — sticky-feeling, thumb-friendly */
+        body.mobile .main-button { padding: 16px; font-size: 13px; border-radius: 12px; letter-spacing: 1px; }
+
+        /* Current bet card */
+        body.mobile .bet-info-item { padding: 12px; border-radius: 8px; }
+        body.mobile .bet-info-label { font-size: 9px; margin-bottom: 6px; }
+        body.mobile .bet-info-value { font-size: 18px; }
+
+        /* Stats grid */
+        body.mobile .stats-grid { gap: 6px; }
+        body.mobile .stat-card { padding: 10px 4px; border-radius: 8px; }
         body.mobile .stat-value { font-size: 14px; }
-        body.mobile .stat-label { font-size: 8px; }
-        body.mobile .game-status-bar { top: 10px; left: 12px; right: 12px; }
-        body.mobile .status-badge { padding: 6px 12px; font-size: 10px; }
-        body.mobile .round-item { padding: 6px 10px; }
-        body.mobile .round-label { font-size: 8px; }
-        body.mobile .round-value { font-size: 12px; }
-        body.mobile .ton-connect-btn { padding: 8px 12px; font-size: 11px; }
+        body.mobile .stat-label { font-size: 7px; margin-top: 2px; }
+
+        /* History */
+        body.mobile .history-list { max-height: 130px; }
+        body.mobile .history-item { padding: 8px 12px; }
+        body.mobile .history-time { font-size: 10px; }
+        body.mobile .history-multiplier { font-size: 11px; padding: 3px 8px; }
+        body.mobile .history-profit { font-size: 11px; }
+
+        /* Modal — full-height bottom sheet feel on mobile */
+        body.mobile .modal {
+            width: 100%;
+            max-width: 100%;
+            max-height: 92vh;
+            border-radius: 20px 20px 0 0;
+            top: auto;
+            bottom: 0;
+            left: 0;
+            transform: translateY(100%);
+            padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+        }
+        body.mobile .modal.active { transform: translateY(0); }
+        body.mobile .modal-title { font-size: 18px; }
+        body.mobile .bonus-title { font-size: 16px; }
+        body.mobile .bonus-desc { font-size: 12px; }
+        body.mobile .ton-deposit-section { padding: 14px; }
+        body.mobile .ton-amount-input-row { flex-direction: column; }
+        body.mobile .ton-send-btn { width: 100%; padding: 12px; }
+        body.mobile .method-address { font-size: 10px; padding: 10px; }
+        body.mobile .qr-container img { width: 110px; height: 110px; }
+
+        /* Profile screen */
+        body.mobile .profile-screen-inner { padding: 12px; gap: 10px; }
+        body.mobile .profile-avatar { width: 64px; height: 64px; font-size: 24px; }
+        body.mobile .profile-name { font-size: 16px; }
+        body.mobile .profile-stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+
+        /* ====================================================== */
+
+
 
         /* Header */
         .header {
@@ -146,6 +260,111 @@
             cursor: pointer; transition: all 0.2s ease;
         }
         .deposit-btn:hover { background: linear-gradient(135deg, #333, #222); border-color: rgba(255,255,255,0.15); color: #fff; }
+
+        /* Profile button (header avatar) */
+        .profile-btn {
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.08);
+            cursor: pointer; overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+            transition: all 0.2s ease; flex-shrink: 0;
+        }
+        .profile-btn:hover { border-color: rgba(255,255,255,0.2); }
+        .profile-btn img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .profile-btn .avatar-fallback {
+            font-size: 16px; font-weight: 700; color: rgba(255,255,255,0.7);
+        }
+
+        /* ====== PROFILE SCREEN ====== */
+        #profile-screen {
+            position: fixed; inset: 0; background: #0a0a0a;
+            z-index: 2000; overflow-y: auto;
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #profile-screen.active { transform: translateX(0); }
+        .profile-screen-inner {
+            max-width: 720px; margin: 0 auto;
+            padding: 20px; display: flex; flex-direction: column; gap: 16px;
+        }
+        .profile-top-bar { display: flex; align-items: center; gap: 14px; }
+        .profile-back-btn {
+            width: 40px; height: 40px; border-radius: 10px;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 18px; color: rgba(255,255,255,0.7);
+            transition: all 0.2s ease; flex-shrink: 0;
+        }
+        .profile-back-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .profile-top-title { font-size: 16px; font-weight: 600; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 2px; }
+
+        .profile-header-card {
+            display: flex; align-items: center; gap: 18px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+            border: 1px solid rgba(255,255,255,0.06); border-radius: 18px;
+            padding: 22px;
+        }
+        .profile-avatar {
+            width: 76px; height: 76px; border-radius: 18px; overflow: hidden;
+            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px; font-weight: 700; color: rgba(255,255,255,0.7);
+            flex-shrink: 0;
+        }
+        .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .profile-name-block { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+        .profile-name { font-size: 20px; font-weight: 600; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .profile-username { font-size: 13px; color: rgba(255,255,255,0.4); }
+        .profile-balance-pill {
+            margin-top: 6px; display: inline-flex; align-items: baseline; gap: 4px;
+            background: rgba(255,255,255,0.06); border-radius: 8px; padding: 4px 10px; width: fit-content;
+        }
+        .profile-balance-pill .amt { font-size: 14px; font-weight: 600; color: #4ade80; }
+        .profile-balance-pill .cur { font-size: 10px; color: rgba(255,255,255,0.4); }
+
+        .profile-section-title {
+            font-size: 10px; color: rgba(255,255,255,0.35); text-transform: uppercase;
+            letter-spacing: 2px; font-weight: 500; margin-bottom: 4px;
+        }
+        .profile-stats-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+        }
+        .profile-stat-card {
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 14px; padding: 16px 10px; text-align: center;
+        }
+        .profile-stat-value { font-size: 20px; font-weight: 600; color: #fff; }
+        .profile-stat-label { font-size: 9px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; }
+        .profile-stat-value.positive { color: #4ade80; }
+        .profile-stat-value.negative { color: #ff5050; }
+
+        .profile-history-list {
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .profile-history-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 16px; background: rgba(255,255,255,0.03);
+            border-radius: 12px; border: 1px solid rgba(255,255,255,0.04);
+        }
+        .profile-history-left { display: flex; align-items: center; gap: 12px; }
+        .profile-history-icon {
+            width: 36px; height: 36px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; font-size: 16px;
+        }
+        .profile-history-icon.win { background: rgba(74,222,128,0.12); }
+        .profile-history-icon.loss { background: rgba(255,80,80,0.12); }
+        .profile-history-details { display: flex; flex-direction: column; gap: 2px; }
+        .profile-history-mult { font-size: 13px; font-weight: 600; color: #fff; }
+        .profile-history-time { font-size: 11px; color: rgba(255,255,255,0.35); }
+        .profile-history-profit { font-size: 14px; font-weight: 600; }
+        .profile-history-profit.positive { color: #4ade80; }
+        .profile-history-profit.negative { color: #ff5050; }
+        .profile-empty-state {
+            text-align: center; padding: 40px 20px; color: rgba(255,255,255,0.25); font-size: 13px;
+        }
 
         /* Deposit Modal */
         .modal-overlay {
@@ -582,6 +801,9 @@
                     </div>
                 </div>
                 <div class="deposit-btn" onclick="openDepositModal()">+</div>
+                <div class="profile-btn" id="profile-btn" onclick="openProfileScreen()">
+                    <span class="avatar-fallback" id="profile-btn-avatar">?</span>
+                </div>
             </div>
         </header>
 
@@ -675,9 +897,113 @@
         </div>
     </div>
 
+    <!-- Profile Screen -->
+    <div id="profile-screen">
+        <div class="profile-screen-inner">
+            <div class="profile-top-bar">
+                <div class="profile-back-btn" onclick="closeProfileScreen()">←</div>
+                <div class="profile-top-title">Профиль</div>
+            </div>
+
+            <div class="profile-header-card">
+                <div class="profile-avatar" id="profile-avatar">
+                    <span id="profile-avatar-fallback">?</span>
+                </div>
+                <div class="profile-name-block">
+                    <div class="profile-name" id="profile-name">—</div>
+                    <div class="profile-username" id="profile-username"></div>
+                    <div class="profile-balance-pill">
+                        <span class="amt" id="profile-balance-amt">0</span>
+                        <span class="cur">RUB</span>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="profile-section-title">Статистика</div>
+                <div class="profile-stats-grid">
+                    <div class="profile-stat-card">
+                        <div class="profile-stat-value" id="profile-stat-games">0</div>
+                        <div class="profile-stat-label">Игр</div>
+                    </div>
+                    <div class="profile-stat-card">
+                        <div class="profile-stat-value" id="profile-stat-wins">0</div>
+                        <div class="profile-stat-label">Побед</div>
+                    </div>
+                    <div class="profile-stat-card">
+                        <div class="profile-stat-value" id="profile-stat-bet">0</div>
+                        <div class="profile-stat-label">Ставок</div>
+                    </div>
+                    <div class="profile-stat-card">
+                        <div class="profile-stat-value" id="profile-stat-best">0x</div>
+                        <div class="profile-stat-label">Лучший икс</div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="profile-section-title">История игр</div>
+                <div class="profile-history-list" id="profile-history-list">
+                    <div class="profile-empty-state">Загрузка...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Screen -->
+    <div id="profile-screen">
+        <div class="profile-screen-inner">
+            <div class="profile-top-bar">
+                <button class="profile-back-btn" onclick="closeProfileScreen()">←</button>
+                <div class="profile-top-title">Профиль</div>
+            </div>
+
+            <div class="profile-header-card">
+                <div class="profile-avatar" id="profile-avatar">?</div>
+                <div class="profile-name-block">
+                    <div class="profile-name" id="profile-name-text">Игрок</div>
+                    <div class="profile-username" id="profile-username-text">@unknown</div>
+                    <div class="profile-balance-pill">
+                        <span class="amt" id="profile-balance-text">0.00</span>
+                        <span class="cur">RUB</span>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="profile-section-title">Статистика</div>
+                <div class="profile-stats-grid">
+                    <div class="profile-stat-card">
+                        <div class="profile-stat-value" id="profile-stat-games">0</div>
+                        <div class="profile-stat-label">Игр</div>
+                    </div>
+                    <div class="profile-stat-card">
+                        <div class="profile-stat-value" id="profile-stat-wins">0</div>
+                        <div class="profile-stat-label">Побед</div>
+                    </div>
+                    <div class="profile-stat-card">
+                        <div class="profile-stat-value" id="profile-stat-bet">0</div>
+                        <div class="profile-stat-label">Ставок</div>
+                    </div>
+                    <div class="profile-stat-card">
+                        <div class="profile-stat-value positive" id="profile-stat-win-total">0</div>
+                        <div class="profile-stat-label">Выиграно</div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="profile-section-title">История последних игр</div>
+                <div class="profile-history-list" id="profile-history-list">
+                    <div class="profile-empty-state">История пуста</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
     // ==================== CONFIG ====================
-    const BACKEND_URL = 'https://bbback-production.up.railway.app'; // ← ЗАМЕНИТЕ после деплоя
+    const BACKEND_URL = 'https://bbback-production.up.railway.app';
     const WALLET_ADDRESS = 'UQAVxMR3ycUvfkmAC8x5elwY9X-jX77sOp2wEVobK1uhvdR4';
 
     // ==================== TOAST ====================
@@ -721,12 +1047,33 @@
     var tgInitData = '';
     var currentUser = null;
     var balance = 0;
+    var tgUserUnsafe = null; // raw Telegram user object (for photo_url, etc.)
 
     function getTelegramInitData() {
         if (window.Telegram && window.Telegram.WebApp) {
             return window.Telegram.WebApp.initData || '';
         }
         return '';
+    }
+
+    // ==================== DEVICE DETECTION ====================
+    function detectMobileDevice() {
+        var ua = navigator.userAgent || '';
+        var isMobileUA = /Android|iPhone|iPad|iPod|Mobile|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+        // Telegram WebApp also exposes platform info when available
+        var tgPlatform = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.platform) || '';
+        var isMobileTgPlatform = ['android', 'ios'].includes(tgPlatform);
+        var isNarrowViewport = window.innerWidth <= 820;
+
+        return isMobileUA || isMobileTgPlatform || isNarrowViewport;
+    }
+
+    function applyDeviceLayout() {
+        if (detectMobileDevice()) {
+            document.body.classList.add('mobile');
+        } else {
+            document.body.classList.remove('mobile');
+        }
     }
 
     async function initAuth() {
@@ -738,7 +1085,10 @@
             tg.ready();
         }
 
+        applyDeviceLayout();
+
         tgInitData = getTelegramInitData();
+        tgUserUnsafe = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) || null;
 
         // Dev mode: if not in Telegram, show error
         if (!tgInitData) {
@@ -769,6 +1119,7 @@
 
             showGame();
             loadStats();
+            populateProfileHeader();
         } catch(e) {
             document.getElementById('auth-spinner').style.display = 'none';
             document.getElementById('auth-error').style.display = 'block';
@@ -781,8 +1132,133 @@
         document.getElementById('auth-screen').style.display = 'none';
         document.getElementById('game-container').style.display = 'flex';
         updateBalanceDisplay();
+        
+        // Set up profile button avatar
+        var firstName = currentUser?.first_name || 'П';
+        var avatarPhoto = null;
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe) {
+            avatarPhoto = window.Telegram.WebApp.initDataUnsafe.user?.photo_url;
+        }
+        
+        var profileBtn = document.getElementById('profile-btn');
+        if (avatarPhoto) {
+            var img = document.createElement('img');
+            img.src = avatarPhoto;
+            img.alt = '';
+            profileBtn.innerHTML = '';
+            profileBtn.appendChild(img);
+        } else {
+            document.getElementById('profile-btn-avatar').textContent = firstName.charAt(0).toUpperCase();
+        }
+        
         setTimeout(initThreeScene, 100);
         fetchTonRate();
+    }
+
+    // Re-evaluate layout if viewport changes significantly (e.g. orientation change)
+    window.addEventListener('resize', function() {
+        applyDeviceLayout();
+    });
+
+    // ==================== PROFILE ====================
+    function getAvatarInitial() {
+        var name = (currentUser && currentUser.first_name) || (tgUserUnsafe && tgUserUnsafe.first_name) || '?';
+        return name.charAt(0).toUpperCase();
+    }
+
+    function populateProfileHeader() {
+        var photoUrl = tgUserUnsafe && tgUserUnsafe.photo_url;
+        var initial = getAvatarInitial();
+
+        // Header button avatar
+        var btnAvatar = document.getElementById('profile-btn');
+        if (photoUrl) {
+            btnAvatar.innerHTML = '<img src="' + photoUrl + '" alt="avatar">';
+        } else {
+            btnAvatar.innerHTML = '<span class="avatar-fallback">' + initial + '</span>';
+        }
+    }
+
+    function openProfileScreen() {
+        var photoUrl = tgUserUnsafe && tgUserUnsafe.photo_url;
+        var initial = getAvatarInitial();
+        var name = (currentUser && currentUser.first_name) || (tgUserUnsafe && tgUserUnsafe.first_name) || 'Игрок';
+        var username = (currentUser && currentUser.username) || (tgUserUnsafe && tgUserUnsafe.username) || '';
+
+        var avatarEl = document.getElementById('profile-avatar');
+        if (photoUrl) {
+            avatarEl.innerHTML = '<img src="' + photoUrl + '" alt="avatar">';
+        } else {
+            avatarEl.innerHTML = '<span id="profile-avatar-fallback">' + initial + '</span>';
+        }
+
+        document.getElementById('profile-name').textContent = name;
+        document.getElementById('profile-username').textContent = username ? '@' + username : '';
+        document.getElementById('profile-balance-amt').textContent = formatMoney(balance);
+
+        document.getElementById('profile-screen').classList.add('active');
+
+        loadProfileStats();
+        loadProfileHistory();
+    }
+
+    function closeProfileScreen() {
+        document.getElementById('profile-screen').classList.remove('active');
+    }
+
+    async function loadProfileStats() {
+        try {
+            const res = await fetch(BACKEND_URL + '/api/stats', {
+                headers: { 'x-telegram-init-data': tgInitData }
+            });
+            const data = await res.json();
+            if (data.stats) {
+                var s = data.stats;
+                document.getElementById('profile-stat-games').textContent = s.games || 0;
+                document.getElementById('profile-stat-wins').textContent = s.wins || 0;
+                document.getElementById('profile-stat-bet').textContent = formatMoney(s.total_bet || 0);
+                document.getElementById('profile-stat-best').textContent =
+                    (s.best_multiplier ? s.best_multiplier.toFixed(2) : '0.00') + 'x';
+            }
+        } catch(e) {}
+    }
+
+    async function loadProfileHistory() {
+        var listEl = document.getElementById('profile-history-list');
+        try {
+            const res = await fetch(BACKEND_URL + '/api/game/history', {
+                headers: { 'x-telegram-init-data': tgInitData }
+            });
+            const data = await res.json();
+            var rounds = data.rounds || [];
+
+            if (rounds.length === 0) {
+                listEl.innerHTML = '<div class="profile-empty-state">Вы ещё не сыграли ни одной игры</div>';
+                return;
+            }
+
+            var html = '';
+            rounds.forEach(function(r) {
+                var isWin = r.result === 'win';
+                var profit = isWin ? (r.win_rub - r.bet_rub) : -r.bet_rub;
+                var dt = new Date(r.created_at);
+                var timeStr = dt.toLocaleDateString('ru') + ' ' + dt.toLocaleTimeString('ru', {hour:'2-digit', minute:'2-digit'});
+
+                html += '<div class="profile-history-item">';
+                html += '<div class="profile-history-left">';
+                html += '<div class="profile-history-icon ' + (isWin ? 'win' : 'loss') + '">' + (isWin ? '✓' : '✕') + '</div>';
+                html += '<div class="profile-history-details">';
+                html += '<span class="profile-history-mult">' + r.crash_point.toFixed(2) + 'x</span>';
+                html += '<span class="profile-history-time">' + timeStr + '</span>';
+                html += '</div></div>';
+                html += '<span class="profile-history-profit ' + (profit >= 0 ? 'positive' : 'negative') + '">' +
+                    (profit >= 0 ? '+' : '') + formatMoney(profit) + ' ₽</span>';
+                html += '</div>';
+            });
+            listEl.innerHTML = html;
+        } catch(e) {
+            listEl.innerHTML = '<div class="profile-empty-state">Не удалось загрузить историю</div>';
+        }
     }
 
     // ==================== TON CONNECT ====================
@@ -1090,6 +1566,8 @@
     function updateBalanceDisplay() {
         var el = document.getElementById('balance-display');
         if (el) el.innerHTML = formatMoney(balance) + ' <span>RUB</span>';
+        var profileBalEl = document.getElementById('profile-balance-amt');
+        if (profileBalEl) profileBalEl.textContent = formatMoney(balance);
     }
 
     // ==================== STATS from backend ====================
@@ -1693,6 +2171,147 @@
         function loop() { requestAnimationFrame(loop); animate(); renderer.render(scene, camera); }
 
         createSmokeSystem(); createRobot(); createMoon(); loop();
+    }
+
+    // ==================== DEVICE DETECTION ====================
+    function detectMobile() {
+        var ua = navigator.userAgent || navigator.vendor || window.opera;
+        // Check for mobile user agents
+        var isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(ua.toLowerCase());
+        // Also check for tablet (some tablets we still consider "mobile" for this game)
+        var isTablet = /ipad|android(?!.*mobile)/i.test(ua.toLowerCase());
+        return isMobile || isTablet;
+    }
+
+    if (detectMobile()) {
+        document.body.classList.add('mobile');
+    }
+
+    // ==================== PROFILE SCREEN ====================
+    var userProfileData = null;
+
+    function openProfileScreen() {
+        document.getElementById('profile-screen').classList.add('active');
+        updateProfileDisplay();
+    }
+
+    function closeProfileScreen() {
+        document.getElementById('profile-screen').classList.remove('active');
+    }
+
+    async function updateProfileDisplay() {
+        try {
+            // Fetch current user data
+            const meRes = await fetch(BACKEND_URL + '/api/me', {
+                headers: { 'x-telegram-init-data': tgInitData }
+            });
+            const meData = await meRes.json();
+
+            // Fetch stats
+            const statsRes = await fetch(BACKEND_URL + '/api/stats', {
+                headers: { 'x-telegram-init-data': tgInitData }
+            });
+            const statsData = await statsRes.json();
+
+            // Fetch history
+            const historyRes = await fetch(BACKEND_URL + '/api/game/history', {
+                headers: { 'x-telegram-init-data': tgInitData }
+            });
+            const historyData = await historyRes.json();
+
+            // Update profile header
+            var firstName = meData.first_name || 'Игрок';
+            var username = meData.username ? '@' + meData.username : '@unknown';
+            document.getElementById('profile-name-text').textContent = firstName;
+            document.getElementById('profile-username-text').textContent = username;
+            document.getElementById('profile-balance-text').textContent = formatMoney(meData.balance_rub);
+
+            // Avatar from Telegram WebApp (if available) or fallback to first letter
+            var avatarEl = document.getElementById('profile-avatar');
+            var avatarPhoto = null;
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe) {
+                avatarPhoto = window.Telegram.WebApp.initDataUnsafe.user?.photo_url;
+            }
+            if (avatarPhoto) {
+                var img = document.createElement('img');
+                img.src = avatarPhoto;
+                img.alt = firstName;
+                avatarEl.innerHTML = '';
+                avatarEl.appendChild(img);
+            } else {
+                avatarEl.innerHTML = firstName.charAt(0).toUpperCase();
+            }
+
+            // Update button avatar too
+            var btnAvatar = document.getElementById('profile-btn-avatar');
+            if (avatarPhoto) {
+                var img = document.createElement('img');
+                img.src = avatarPhoto;
+                img.alt = '';
+                document.getElementById('profile-btn').innerHTML = '';
+                document.getElementById('profile-btn').appendChild(img);
+            } else {
+                btnAvatar.textContent = firstName.charAt(0).toUpperCase();
+            }
+
+            // Update stats
+            var s = statsData.stats || {};
+            document.getElementById('profile-stat-games').textContent = s.games || 0;
+            document.getElementById('profile-stat-wins').textContent = s.wins || 0;
+            document.getElementById('profile-stat-bet').textContent = formatMoney(s.total_bet || 0);
+            var totalWin = s.total_win || 0;
+            var winEl = document.getElementById('profile-stat-win-total');
+            winEl.textContent = formatMoney(totalWin);
+            if (totalWin < 0) winEl.classList.add('negative');
+
+            // Update history
+            var rounds = historyData.rounds || [];
+            var historyEl = document.getElementById('profile-history-list');
+            if (rounds.length === 0) {
+                historyEl.innerHTML = '<div class="profile-empty-state">История пуста</div>';
+            } else {
+                historyEl.innerHTML = '';
+                for (var i = 0; i < Math.min(rounds.length, 20); i++) {
+                    var r = rounds[i];
+                    var won = r.result === 'win';
+                    var profit = (r.win_rub || 0) - (r.bet_rub || 0);
+
+                    var item = document.createElement('div');
+                    item.className = 'profile-history-item';
+
+                    var iconEl = document.createElement('div');
+                    iconEl.className = 'profile-history-icon ' + (won ? 'win' : 'loss');
+                    iconEl.textContent = won ? '✓' : '✗';
+
+                    var detailsEl = document.createElement('div');
+                    detailsEl.className = 'profile-history-details';
+                    var multEl = document.createElement('div');
+                    multEl.className = 'profile-history-mult';
+                    multEl.textContent = r.crash_point.toFixed(2) + 'x' + (r.cashout_multiplier ? ' → ' + r.cashout_multiplier.toFixed(2) + 'x' : '');
+                    var timeEl = document.createElement('div');
+                    timeEl.className = 'profile-history-time';
+                    var date = new Date(r.created_at);
+                    timeEl.textContent = date.toLocaleTimeString() + ' · ' + date.toLocaleDateString();
+                    detailsEl.appendChild(multEl);
+                    detailsEl.appendChild(timeEl);
+
+                    var profitEl = document.createElement('div');
+                    profitEl.className = 'profile-history-profit ' + (profit >= 0 ? 'positive' : 'negative');
+                    profitEl.textContent = (profit >= 0 ? '+' : '') + formatMoney(profit);
+
+                    var leftDiv = document.createElement('div');
+                    leftDiv.className = 'profile-history-left';
+                    leftDiv.appendChild(iconEl);
+                    leftDiv.appendChild(detailsEl);
+
+                    item.appendChild(leftDiv);
+                    item.appendChild(profitEl);
+                    historyEl.appendChild(item);
+                }
+            }
+        } catch(e) {
+            console.error('Profile update error:', e);
+        }
     }
 
     // ==================== INIT ====================
