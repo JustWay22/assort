@@ -48,7 +48,7 @@ db.serialize(() => {
     tg_id TEXT UNIQUE NOT NULL,
     tg_username TEXT,
     tg_first_name TEXT,
-    balance_rub REAL DEFAULT 0,
+    balance_rub REAL DEFAULT 50,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
