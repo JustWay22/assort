@@ -807,7 +807,76 @@
             </div>
         </div>
     </div>
+<!-- Tabs -->
+<div style="padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+  <div class="tabs-nav">
+    <button class="tab-btn active" onclick="switchTab('game')">🎮 Игра</button>
+    <button class="tab-btn" onclick="switchTab('bonuses')">🎁 Бонусы</button>
+    <button class="tab-btn" onclick="switchTab('referrals')">👥 Рефералы</button>
+    <button class="tab-btn" onclick="switchTab('profile')">👤 Профиль</button>
+  </div>
+</div>
 
+<!-- Game Tab (existing content) -->
+<div id="tab-game" class="tab-content active">
+  <!-- твой текущий контент игры -->
+</div>
+
+<!-- Bonuses Tab -->
+<div id="tab-bonuses" class="tab-content">
+  <div style="padding: 20px;">
+    <div style="font-size: 14px; color: rgba(255,255,255,0.6); margin-bottom: 20px;">
+      Крутите колесо каждые 24 часа и получайте рандом от 10 до 100₽!
+    </div>
+    <div class="wheel-container">
+      <svg class="wheel-svg" id="bonus-wheel" viewBox="0 0 240 240">
+        <circle cx="120" cy="120" r="110" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
+        <!-- Segments will be drawn by JS -->
+      </svg>
+      <button class="wheel-btn" id="spin-btn" onclick="spinWheel()">Крутить колесо</button>
+      <div id="wheel-result"></div>
+      <button id="claim-btn" style="display:none; margin-top: 10px; padding: 12px 24px; background: #4ade80; color: #000; border: none; border-radius: 10px; font-weight: 600; cursor: pointer;" onclick="claimBonus()">Забрать бонус</button>
+    </div>
+    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.05);">
+      <div style="font-size: 12px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">История бонусов</div>
+      <div id="bonus-history" style="display: flex; flex-direction: column; gap: 8px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Referrals Tab -->
+<div id="tab-referrals" class="tab-content">
+  <div style="padding: 20px;">
+    <div style="font-size: 14px; color: rgba(255,255,255,0.6); margin-bottom: 16px;">
+      Пригласите друзей и получайте 70% от их проигрышей!
+    </div>
+    <div class="ref-code-box">
+      <div style="font-size: 10px; color: rgba(255,255,255,0.35); margin-bottom: 8px; text-transform: uppercase;">Ваша ссылка для друзей</div>
+      <div class="ref-code-text" id="ref-link-text">Загрузка...</div>
+      <button class="copy-ref-btn" onclick="copyRefLink()">Скопировать</button>
+    </div>
+    <div class="ref-stats">
+      <div class="ref-stat">
+        <div class="ref-stat-value" id="ref-count">0</div>
+        <div class="ref-stat-label">Приглашено</div>
+      </div>
+      <div class="ref-stat">
+        <div class="ref-stat-value" id="ref-balance">0</div>
+        <div class="ref-stat-label">Реф баланс</div>
+      </div>
+    </div>
+    <button style="width: 100%; padding: 14px; background: #4ade80; color: #000; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; margin-bottom: 20px;" onclick="withdrawRefBalance()">Вывести в игровой баланс</button>
+    <div style="font-size: 12px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Последние заработки</div>
+    <div class="ref-earnings-list" id="ref-earnings-list"></div>
+  </div>
+</div>
+
+
+
+
+
+
+    
     <div class="game-container" id="game-container" style="display:none">
         <header class="header">
             <div class="logo-section">
