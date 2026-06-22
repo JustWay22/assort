@@ -1,23 +1,4 @@
-app.post('/api/referral/withdraw', requireAuth, async (req, res) => {
-  const earnings = await dbGet(
-    'SELECT SUM(earning_rub) as total FROM referral_earnings WHERE referrer_id = ?',
-    [req.dbUser.id]
-  );
-  const amount = earnings.total || 0;
-  if (amount <= 0) return res.status(400).json({ error: 'No earnings to withdraw' });
 
-  await dbRun(
-    'UPDATE users SET balance_rub = balance_rub + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-    [amount, req.dbUser.id]
-  );
-  await dbRun(
-    'DELETE FROM referral_earnings WHERE referrer_id = ?',
-    [req.dbUser.id]
-  );
-
-  const user = await dbGet('SELECT balance_rub FROM users WHERE id = ?', [req.dbUser.id]);
-  res.json({ ok: true, amount, new_balance: user.balance_rub });
-});
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
