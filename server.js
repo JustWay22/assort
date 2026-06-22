@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -50,6 +49,7 @@ db.serialize(() => {
     tg_username TEXT,
     tg_first_name TEXT,
     balance_rub REAL DEFAULT 50,
+    referral_balance REAL DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
@@ -98,6 +98,35 @@ db.serialize(() => {
     pay_url TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     paid_at DATETIME
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS bonus_wheels (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    amount_rub REAL NOT NULL,
+    spin_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    next_spin_available DATETIME,
+    claimed INTEGER DEFAULT 0,
+    claimed_at DATETIME
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS referrals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    referrer_id INTEGER NOT NULL,
+    referral_code TEXT UNIQUE NOT NULL,
+    referred_user_id INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    first_referral_at DATETIME
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS referral_earnings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    referrer_id INTEGER NOT NULL,
+    referred_user_id INTEGER NOT NULL,
+    loss_amount_rub REAL NOT NULL,
+    earning_rub REAL NOT NULL,
+    game_round_id INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 
   console.log('✅ Tables ready');
@@ -198,20 +227,15 @@ async function getTonRate() {
 // ==================== TON VERIFICATION ====================
 const WALLET_ADDRESS = process.env.WALLET_ADDRESS || 'UQAVxMR3ycUvfkmAC8x5elwY9X-jX77sOp2wEVobK1uhvdR4';
 
-// TONCenter returns addresses in raw form (0:hex...), while TON Connect gives user-friendly
-// form (UQ.../EQ...). We normalize both to the raw hex tail for comparison.
 function normalizeAddress(addr) {
   if (!addr) return null;
   try {
-    // Raw form: "0:abcdef..." -> take hex part
     if (addr.includes(':')) {
       return addr.split(':')[1].toLowerCase();
     }
-    // User-friendly base64/base64url form: decode and extract the 32-byte hash
     let b64 = addr.replace(/-/g, '+').replace(/_/g, '/');
     while (b64.length % 4) b64 += '=';
     const buf = Buffer.from(b64, 'base64');
-    // Format: [flags(1)][workchain(1)][hash(32)][crc(2)]
     if (buf.length >= 34) {
       return buf.slice(2, 34).toString('hex').toLowerCase();
     }
@@ -254,7 +278,6 @@ async function checkWalletTransactions(sinceTimestamp) {
 
 // ==================== CRYPTOBOT ====================
 const CRYPTOBOT_TOKEN = process.env.CRYPTOBOT_TOKEN;
-// Use 'https://testnet-pay.crypt.bot/api' for testnet token (@CryptoTestnetBot)
 const CRYPTOBOT_API = process.env.CRYPTOBOT_API_URL || 'https://pay.crypt.bot/api';
 
 async function cryptoBotRequest(method, params = {}) {
@@ -292,7 +315,14 @@ app.get('/api/ton-rate', async (req, res) => {
 
 app.get('/api/me', requireAuth, (req, res) => {
   const u = req.dbUser;
-  res.json({ id: u.id, tg_id: u.tg_id, username: u.tg_username, first_name: u.tg_first_name, balance_rub: u.balance_rub });
+  res.json({ 
+    id: u.id, 
+    tg_id: u.tg_id, 
+    username: u.tg_username, 
+    first_name: u.tg_first_name, 
+    balance_rub: u.balance_rub,
+    referral_balance: u.referral_balance
+  });
 });
 
 app.post('/api/deposit/init', requireAuth, async (req, res) => {
@@ -322,8 +352,6 @@ app.get('/api/deposit/check/:deposit_id', requireAuth, async (req, res) => {
 
   for (const tx of txs) {
     const addressMatches = tx.from_address_normalized === expectedAddrNorm;
-    // Allow up to 0.05 TON tolerance: sender's wallet may deduct gas before the value reaches us,
-    // or amount might be slightly adjusted by the wallet app.
     const amountMatches = Math.abs(tx.amount_ton - deposit.amount_ton) < 0.05;
 
     if (addressMatches && amountMatches) {
@@ -361,8 +389,26 @@ app.post('/api/game/round', requireAuth, async (req, res) => {
   if (result === 'win' && win_rub > 0) {
     await dbRun('UPDATE users SET balance_rub = balance_rub + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [win_rub, req.dbUser.id]);
   }
-  await dbRun('INSERT INTO game_rounds (user_id, bet_rub, crash_point, cashout_multiplier, win_rub, result) VALUES (?, ?, ?, ?, ?, ?)',
+  
+  const insertResult = await dbRun('INSERT INTO game_rounds (user_id, bet_rub, crash_point, cashout_multiplier, win_rub, result) VALUES (?, ?, ?, ?, ?, ?)',
     [req.dbUser.id, bet_rub, crash_point, cashout_multiplier || null, win_rub || 0, result]);
+
+  // If loss, give 70% to referrer
+  if (result === 'loss') {
+    const ref = await dbGet('SELECT referrer_id FROM referrals WHERE referred_user_id = ? AND referrer_id IS NOT NULL', [req.dbUser.id]);
+    if (ref) {
+      const refEarning = Math.round(bet_rub * 0.7 * 100) / 100;
+      await dbRun(
+        `INSERT INTO referral_earnings (referrer_id, referred_user_id, loss_amount_rub, earning_rub, game_round_id)
+         VALUES (?, ?, ?, ?, ?)`,
+        [ref.referrer_id, req.dbUser.id, bet_rub, refEarning, insertResult.lastID]
+      );
+      await dbRun(
+        'UPDATE users SET referral_balance = referral_balance + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [refEarning, ref.referrer_id]
+      );
+    }
+  }
 
   const updatedUser = await dbGet('SELECT balance_rub FROM users WHERE id = ?', [req.dbUser.id]);
   res.json({ ok: true, new_balance: updatedUser.balance_rub });
@@ -384,7 +430,6 @@ app.get('/api/game/history', requireAuth, async (req, res) => {
 
 // ==================== CRYPTOBOT ROUTES ====================
 
-// Create an invoice for deposit
 app.post('/api/cryptobot/create-invoice', requireAuth, async (req, res) => {
   try {
     const { amount, asset } = req.body;
@@ -392,11 +437,6 @@ app.post('/api/cryptobot/create-invoice', requireAuth, async (req, res) => {
     const selectedAsset = validAssets.includes(asset) ? asset : 'USDT';
 
     if (!amount || amount <= 0) return res.status(400).json({ error: 'Invalid amount' });
-
-    const rate = await getTonRate(); // RUB per TON, used for TON; for others we estimate via TON rate proxy is wrong, so:
-    // For RUB conversion we use a simple rule: if asset is TON, use TON rate; otherwise treat 1 unit ≈ rough USD-RUB via TON rate proxy is inaccurate.
-    // Simplest reliable approach: ask user for amount in the chosen asset, and compute RUB only for TON precisely.
-    // For non-TON assets we still credit based on real fiat amount CryptoBot reports on payment (paid_usd_rate from webhook), not an estimate here.
 
     const invoice = await cryptoBotRequest('createInvoice', {
       amount: String(amount),
@@ -407,9 +447,9 @@ app.post('/api/cryptobot/create-invoice', requireAuth, async (req, res) => {
       expires_in: 3600
     });
 
-    // Estimate RUB only as a preview; final credited amount is computed from CryptoBot's reported paid amount at webhook time
     let amount_rub_preview = 0;
     if (selectedAsset === 'TON') {
+      const rate = await getTonRate();
       amount_rub_preview = amount * rate;
     }
 
@@ -432,7 +472,6 @@ app.post('/api/cryptobot/create-invoice', requireAuth, async (req, res) => {
   }
 });
 
-// Check invoice status (polling from frontend, as backup to webhook)
 app.get('/api/cryptobot/check-invoice/:invoice_id', requireAuth, async (req, res) => {
   const inv = await dbGet(
     'SELECT * FROM cryptobot_invoices WHERE invoice_id = ? AND user_id = ?',
@@ -445,7 +484,6 @@ app.get('/api/cryptobot/check-invoice/:invoice_id', requireAuth, async (req, res
     return res.json({ status: 'paid', credited: true, new_balance: user.balance_rub });
   }
 
-  // Fallback: actively check with CryptoBot in case webhook hasn't arrived yet
   try {
     const result = await cryptoBotRequest('getInvoices', { invoice_ids: inv.invoice_id });
     const remoteInvoice = result.items?.[0];
@@ -461,30 +499,24 @@ app.get('/api/cryptobot/check-invoice/:invoice_id', requireAuth, async (req, res
   res.json({ status: inv.status, credited: false });
 });
 
-// Shared crediting logic used by both webhook and polling fallback
 async function creditCryptoBotInvoice(invoiceData) {
   const inv = await dbGet('SELECT * FROM cryptobot_invoices WHERE invoice_id = ?', [String(invoiceData.invoice_id)]);
   if (!inv) {
     console.error('Unknown invoice paid:', invoiceData.invoice_id);
     return;
   }
-  if (inv.status === 'paid') return; // already credited, avoid double-credit
+  if (inv.status === 'paid') return;
 
   const rate = await getTonRate();
 
-  // Compute RUB amount from what was actually paid.
-  // CryptoBot reports paid_asset/paid_amount, and for fiat conversion we use paid_usd_rate when available.
   let amount_rub;
   if (invoiceData.paid_asset === 'TON') {
     amount_rub = parseFloat(invoiceData.paid_amount) * rate;
   } else if (invoiceData.paid_usd_rate) {
-    // Convert paid amount to USD, then USD to RUB using TON's RUB/USD cross rate as approximation
     const usdValue = parseFloat(invoiceData.paid_amount) * parseFloat(invoiceData.paid_usd_rate);
-    // Approximate USD->RUB using a fallback fixed cross rate derived from TON rate if no direct USD rate is cached
-    const usdRubRate = cachedUsdRubRate.rate;
-    amount_rub = usdValue * usdRubRate;
+    amount_rub = usdValue * 90; // fallback USD/RUB rate
   } else {
-    amount_rub = parseFloat(invoiceData.amount) * rate; // last resort fallback
+    amount_rub = parseFloat(invoiceData.amount) * rate;
   }
   amount_rub = Math.round(amount_rub);
 
@@ -505,25 +537,10 @@ async function creditCryptoBotInvoice(invoiceData) {
   console.log(`✅ Credited ${amount_rub} RUB to user ${inv.user_id} via CryptoBot invoice ${invoiceData.invoice_id}`);
 }
 
-// USD/RUB rate cache (rough, for non-TON asset conversion fallback)
-let cachedUsdRubRate = { rate: 90, timestamp: 0 };
-async function getUsdRubRate() {
-  const now = Date.now();
-  if (now - cachedUsdRubRate.timestamp < 5 * 60 * 1000) return cachedUsdRubRate.rate;
-  try {
-    const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=rub');
-    const data = await res.json();
-    const rate = data?.tether?.rub;
-    if (rate && rate > 0) { cachedUsdRubRate = { rate, timestamp: now }; return rate; }
-  } catch (e) { console.error('USD/RUB rate fetch error:', e.message); }
-  return cachedUsdRubRate.rate;
-}
-
-// CryptoBot webhook — receives payment notifications
 app.post('/api/cryptobot/webhook', async (req, res) => {
   try {
     const signature = req.headers['crypto-pay-api-signature'];
-    const rawBody = req.body; // Buffer, because of express.raw() middleware on this route
+    const rawBody = req.body;
 
     if (!signature || !verifyCryptoBotSignature(rawBody, signature)) {
       console.error('CryptoBot webhook: invalid signature');
@@ -533,7 +550,6 @@ app.post('/api/cryptobot/webhook', async (req, res) => {
     const update = JSON.parse(rawBody.toString('utf8'));
 
     if (update.update_type === 'invoice_paid') {
-      await getUsdRubRate(); // ensure cache is warm
       await creditCryptoBotInvoice(update.payload);
     }
 
@@ -542,6 +558,174 @@ app.post('/api/cryptobot/webhook', async (req, res) => {
     console.error('CryptoBot webhook error:', e.message);
     res.status(500).json({ error: 'Webhook processing error' });
   }
+});
+
+// ==================== BONUS WHEEL ====================
+function generateBonusAmount() {
+  const rand = Math.random();
+  if (rand < 0.7) {
+    return Math.round(10 + Math.random() * 39);
+  } else {
+    return Math.round(50 + Math.random() * 50);
+  }
+}
+
+app.get('/api/bonus/wheel-status', requireAuth, async (req, res) => {
+  const lastWheel = await dbGet(
+    'SELECT * FROM bonus_wheels WHERE user_id = ? ORDER BY spin_date DESC LIMIT 1',
+    [req.dbUser.id]
+  );
+
+  if (!lastWheel) {
+    return res.json({ canSpin: true, nextAvailable: null });
+  }
+
+  if (!lastWheel.claimed) {
+    return res.json({ canSpin: false, unclaimed: true, amount: lastWheel.amount_rub });
+  }
+
+  const now = new Date();
+  const nextTime = new Date(lastWheel.next_spin_available);
+  if (now >= nextTime) {
+    return res.json({ canSpin: true, nextAvailable: null });
+  } else {
+    return res.json({ canSpin: false, nextAvailable: nextTime.toISOString() });
+  }
+});
+
+app.post('/api/bonus/spin-wheel', requireAuth, async (req, res) => {
+  try {
+    const lastWheel = await dbGet(
+      'SELECT * FROM bonus_wheels WHERE user_id = ? AND claimed = 1 ORDER BY spin_date DESC LIMIT 1',
+      [req.dbUser.id]
+    );
+
+    if (lastWheel) {
+      const nextTime = new Date(lastWheel.next_spin_available);
+      if (new Date() < nextTime) {
+        return res.status(400).json({ error: 'Spin not available yet' });
+      }
+    }
+
+    const amount = generateBonusAmount();
+    const nextSpinTime = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    await dbRun(
+      `INSERT INTO bonus_wheels (user_id, amount_rub, next_spin_available, claimed)
+       VALUES (?, ?, ?, 0)`,
+      [req.dbUser.id, amount, nextSpinTime]
+    );
+
+    res.json({ amount, nextAvailable: nextSpinTime.toISOString() });
+  } catch(e) {
+    console.error('Spin error:', e);
+    res.status(500).json({ error: 'Spin failed' });
+  }
+});
+
+app.post('/api/bonus/claim-wheel', requireAuth, async (req, res) => {
+  try {
+    const wheel = await dbGet(
+      'SELECT * FROM bonus_wheels WHERE user_id = ? AND claimed = 0 ORDER BY spin_date DESC LIMIT 1',
+      [req.dbUser.id]
+    );
+
+    if (!wheel) return res.status(400).json({ error: 'No unclaimed wheel' });
+
+    await dbRun(
+      'UPDATE bonus_wheels SET claimed = 1, claimed_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [wheel.id]
+    );
+    await dbRun(
+      'UPDATE users SET balance_rub = balance_rub + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [wheel.amount_rub, req.dbUser.id]
+    );
+
+    const updatedUser = await dbGet('SELECT balance_rub FROM users WHERE id = ?', [req.dbUser.id]);
+    res.json({ ok: true, amount: wheel.amount_rub, new_balance: updatedUser.balance_rub });
+  } catch(e) {
+    console.error('Claim error:', e);
+    res.status(500).json({ error: 'Claim failed' });
+  }
+});
+
+// ==================== REFERRALS ====================
+function generateRefCode() {
+  return Math.random().toString(36).substring(2, 10).toUpperCase();
+}
+
+app.get('/api/referral/code', requireAuth, async (req, res) => {
+  let ref = await dbGet('SELECT * FROM referrals WHERE referrer_id = ?', [req.dbUser.id]);
+
+  if (!ref) {
+    const code = generateRefCode();
+    await dbRun(
+      'INSERT INTO referrals (referrer_id, referral_code) VALUES (?, ?)',
+      [req.dbUser.id, code]
+    );
+    ref = { referral_code: code };
+  }
+
+  const referralUrl = `https://assort-five.vercel.app?ref=${ref.referral_code}`;
+  
+  const refCount = await dbGet(
+    'SELECT COUNT(*) as cnt FROM referrals WHERE referrer_id = ? AND referred_user_id IS NOT NULL',
+    [req.dbUser.id]
+  );
+  
+  const user = await dbGet('SELECT referral_balance FROM users WHERE id = ?', [req.dbUser.id]);
+
+  res.json({
+    code: ref.referral_code,
+    url: referralUrl,
+    referred_count: refCount.cnt || 0,
+    total_earnings: user.referral_balance || 0
+  });
+});
+
+app.post('/api/referral/join', requireAuth, async (req, res) => {
+  const { ref_code } = req.body;
+  if (!ref_code) return res.status(400).json({ error: 'No ref code' });
+
+  const refRecord = await dbGet('SELECT * FROM referrals WHERE referral_code = ?', [ref_code]);
+  if (!refRecord) return res.status(400).json({ error: 'Invalid ref code' });
+
+  const existing = await dbGet(
+    'SELECT id FROM referrals WHERE referrer_id = ? AND referred_user_id = ?',
+    [refRecord.referrer_id, req.dbUser.id]
+  );
+  if (existing) return res.status(400).json({ error: 'Already referred' });
+
+  await dbRun(
+    'UPDATE referrals SET referred_user_id = ?, first_referral_at = CURRENT_TIMESTAMP WHERE id = ?',
+    [req.dbUser.id, refRecord.id]
+  );
+
+  res.json({ ok: true, referrer_id: refRecord.referrer_id });
+});
+
+app.get('/api/referral/earnings', requireAuth, async (req, res) => {
+  const earnings = await dbAll(
+    `SELECT * FROM referral_earnings WHERE referrer_id = ? ORDER BY created_at DESC LIMIT 50`,
+    [req.dbUser.id]
+  );
+
+  res.json({ earnings });
+});
+
+app.post('/api/referral/withdraw', requireAuth, async (req, res) => {
+  const user = await dbGet('SELECT referral_balance FROM users WHERE id = ?', [req.dbUser.id]);
+  const amount = user.referral_balance || 0;
+  
+  if (amount <= 0) return res.status(400).json({ error: 'No earnings to withdraw' });
+
+  await dbRun(
+    'UPDATE users SET balance_rub = balance_rub + ?, referral_balance = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+    [amount, req.dbUser.id]
+  );
+
+  const updatedUser = await dbGet('SELECT balance_rub FROM users WHERE id = ?', [req.dbUser.id]);
+  res.json({ ok: true, amount, new_balance: updatedUser.balance_rub });
 });
 
 // ==================== START ====================
